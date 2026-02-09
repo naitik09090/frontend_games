@@ -12,6 +12,7 @@ const ManageGames = () => {
     });
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [fileInputKey, setFileInputKey] = useState(Date.now());
     const itemsPerPage = 10;
 
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -106,6 +107,7 @@ const ManageGames = () => {
     const resetForm = () => {
         setEditingGame(null);
         setFormData({ gameName: '', gameLogo: null, iframs: '' });
+        setFileInputKey(Date.now());
     };
 
     const handleToggleStatus = async (id) => {
@@ -177,11 +179,11 @@ const ManageGames = () => {
                         </div>
                         <div className="col-md-4">
                             <label className="form-label">Game Logo {editingGame && '(Leave blank to keep current)'}</label>
-                            <input type="file" name="gameLogo" onChange={handleInputChange} className="form-control" accept="image/*" />
+                            <input key={fileInputKey} type="file" name="gameLogo" onChange={handleInputChange} className="form-control" accept="image/*" />
                         </div>
                         <div className="col-md-4">
-                            <label className="form-label">Iframe URL</label>
-                            <input type="url" name="iframs" value={formData.iframs} onChange={handleInputChange} className="form-control" required />
+                            <label className="form-label">Iframe URL (embed links)</label>
+                            <input type="text" name="iframs" value={formData.iframs} onChange={handleInputChange} className="form-control" placeholder="https://..." required />
                         </div>
                         <div className="col-12 mt-4">
                             <button type="submit" className="btn btn-primary me-2 px-4">
@@ -217,17 +219,24 @@ const ManageGames = () => {
                                     <tr key={game._id}>
                                         <td>
                                             <img
-                                                src={game.gameLogo?.startsWith('http') ? game.gameLogo : `${API_URL}${game.gameLogo?.startsWith('/') ? '' : '/'}${game.gameLogo}`}
-                                                alt={game.gameName || game.gameName}
+                                                src={
+                                                    game.gameLogo
+                                                        ? (game.gameLogo.startsWith('http')
+                                                            ? game.gameLogo
+                                                            : `${API_URL}${game.gameLogo.startsWith('/') ? '' : '/images/'}${game.gameLogo}`)
+                                                        : 'placeholder'
+                                                }
+                                                alt={game.gameName}
                                                 style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                                                 className="rounded"
                                                 onError={(e) => {
+                                                    e.target.onerror = null;
                                                     e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="50" height="50"%3E%3Crect fill="%23ddd" width="50" height="50"/%3E%3Ctext fill="%23999" font-size="10" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Img%3C/text%3E%3C/svg%3E';
                                                 }}
                                             />
                                         </td>
                                         <td><strong>{game.gameName}</strong></td>
-                                        <td><small className="text-muted">{game.iframs || 'N/A'}</small></td>
+                                        <td><small className="text-muted">{Array.isArray(game.iframs) ? game.iframs.join(', ') : (game.iframs || 'N/A')}</small></td>
                                         <td>
                                             <div className="form-check form-switch d-flex justify-content-center p-0 m-0">
                                                 <input
