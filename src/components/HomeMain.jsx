@@ -326,9 +326,9 @@ const HomeMain = () => {
                         <i className="bi bi-controller me-2 fs-3"></i>
                         GAMES
                     </a>
-                    <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    {/* <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                         <span className="navbar-toggler-icon"></span>
-                    </button>
+                    </button> */}
                     {/* <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
                         <ul className="navbar-nav gap-2 align-items-center">
                             {user ? (
