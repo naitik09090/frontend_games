@@ -5,7 +5,7 @@ const DashboardHome = () => {
     const [loading, setLoading] = useState(true);
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000'
-        : 'https://backend-games-phi.vercel.app/';
+        : 'https://backend-games-phi.vercel.app';
 
     useEffect(() => {
         const fetchStats = async () => {
