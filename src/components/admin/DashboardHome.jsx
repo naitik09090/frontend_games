@@ -11,9 +11,10 @@ const DashboardHome = () => {
         const fetchStats = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`${API_URL}/stats`);
+                const response = await fetch(`${API_URL}/games`);
                 const data = await response.json();
-                setStats({ totalGames: data.totalGames });
+                console.log(data);
+                setStats({ totalGames: data.pagination.totalGames });
             } catch (err) {
                 console.error('Error fetching stats:', err);
             } finally {
