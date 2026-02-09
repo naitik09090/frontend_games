@@ -44,15 +44,18 @@ const HomeMain = () => {
             if (!response.ok) throw new Error('Failed to fetch games');
             const data = await response.json();
 
-            console.log(`✅ Fetched ${data.length} games (Page ${pageNum})`);
+            // Handle both response formats: {total, games} or just games array
+            const gamesData = data.games || data;
 
-            if (data.length < limit) {
+            console.log(`✅ Fetched ${gamesData.length} games (Page ${pageNum})`);
+
+            if (gamesData.length < limit) {
                 hasMoreRef.current = false;
             } else {
                 hasMoreRef.current = true;
             }
 
-            setGames(prev => pageNum === 1 ? data : [...prev, ...data]);
+            setGames(prev => pageNum === 1 ? gamesData : [...prev, ...gamesData]);
         } catch (err) {
             console.error('❌ Error fetching games:', err.message);
             setError(err.message);

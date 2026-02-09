@@ -31,7 +31,8 @@ const GamePlayer = () => {
                 const allGamesRes = await fetch(`${API_URL}/games`);
                 if (allGamesRes.ok) {
                     const allGamesData = await allGamesRes.json();
-                    setAllGames(allGamesData);
+                    // Handle both response formats: {total, games} or just games array
+                    setAllGames(allGamesData.games || allGamesData);
                 }
 
                 setLoading(false);

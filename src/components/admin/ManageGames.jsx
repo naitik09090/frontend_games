@@ -28,10 +28,12 @@ const ManageGames = () => {
 
     const fetchGames = async () => {
         try {
-            const response = await fetch(`${API_URL}/games`);
+            // Fetch all games from both collections (no pagination limit)
+            const response = await fetch(`${API_URL}/games?page=1&limit=999999`);
             if (!response.ok) throw new Error('Failed to fetch games');
             const data = await response.json();
-            setGames(data);
+            // Handle both response formats: {total, games} or just games array
+            setGames(data.games || data);
             setLoading(false);
         } catch (err) {
             setError(err.message);

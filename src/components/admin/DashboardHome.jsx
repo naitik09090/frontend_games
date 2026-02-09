@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const DashboardHome = () => {
     const [stats, setStats] = useState({ totalGames: 0 });
+    const [loading, setLoading] = useState(true);
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000'
         : 'https://backend-games-zeta-eight.vercel.app';
@@ -9,15 +10,18 @@ const DashboardHome = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await fetch(`${API_URL}/games`);
+                setLoading(true);
+                const response = await fetch(`${API_URL}/stats`);
                 const data = await response.json();
-                setStats({ totalGames: data.length });
+                setStats({ totalGames: data.totalGames });
             } catch (err) {
                 console.error('Error fetching stats:', err);
+            } finally {
+                setLoading(false);
             }
         };
         fetchStats();
-    }, []);
+    }, [API_URL]);
 
     return (
         <div>
@@ -28,8 +32,19 @@ const DashboardHome = () => {
                 <div className="col-md-4">
                     <div className="card text-white bg-primary mb-3 shadow-sm">
                         <div className="card-body text-center py-4">
-                            <h5 className="card-title display-4">{stats.totalGames}</h5>
-                            <p className="card-text">Total Games</p>
+                            {loading ? (
+                                <>
+                                    <div className="spinner-border text-light mb-3" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p className="card-text">Loading game count...</p>
+                                </>
+                            ) : (
+                                <>
+                                    <h5 className="card-title display-4">{stats.totalGames.toLocaleString()}</h5>
+                                    <p className="card-text">Total Games</p>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
