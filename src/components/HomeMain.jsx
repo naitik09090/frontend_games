@@ -384,11 +384,18 @@ const HomeMain = () => {
                                 <div key={game._id} className={`box box-${randomHeight}`} style={{ animationDelay: `${index * 0.05}s` }}>
                                     <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
                                         <img
-                                            src={game.gameLogo?.startsWith('http') ? game.gameLogo : `${API_URL}${game.gameLogo?.startsWith('/') ? '' : '/'}${game.gameLogo}`}
+                                            src={
+                                                game.gameLogo
+                                                    ? (game.gameLogo.startsWith('http') || game.gameLogo.startsWith('data:')
+                                                        ? game.gameLogo
+                                                        : `${API_URL}${game.gameLogo.startsWith('/') ? '' : '/images/'}${game.gameLogo}`)
+                                                    : 'placeholder'
+                                            }
                                             alt={game.gameName}
                                             className="game-logo"
                                             loading="lazy"
                                             onError={(e) => {
+                                                e.target.onerror = null;
                                                 e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
                                             }}
                                         />

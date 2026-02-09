@@ -516,10 +516,17 @@ const GamePlayer = () => {
                                     <div key={g._id} className={`box box-${randomHeight}`} style={{ animationDelay: `${index * 0.1}s` }}>
                                         <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
                                             <img
-                                                src={g.gameLogo?.startsWith('http') ? g.gameLogo : `${API_URL}${g.gameLogo?.startsWith('/') ? '' : '/'}${g.gameLogo}`}
+                                                src={
+                                                    g.gameLogo
+                                                        ? (g.gameLogo.startsWith('http') || g.gameLogo.startsWith('data:')
+                                                            ? g.gameLogo
+                                                            : `${API_URL}${g.gameLogo.startsWith('/') ? '' : '/images/'}${g.gameLogo}`)
+                                                        : 'placeholder'
+                                                }
                                                 alt={g.gameName}
                                                 className="game-logo"
                                                 onError={(e) => {
+                                                    e.target.onerror = null;
                                                     e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
                                                 }}
                                             />
