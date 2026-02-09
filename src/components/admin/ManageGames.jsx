@@ -16,7 +16,7 @@ const ManageGames = () => {
 
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000'
-        : 'https://backend-games-zeta-eight.vercel.app';
+        : 'https://backend-games-phi.vercel.app/';
 
     useEffect(() => {
         fetchGames();
