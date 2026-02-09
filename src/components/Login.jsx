@@ -16,7 +16,9 @@ const Login = () => {
         }
     }, [location.state]);
 
-    const API_URL = 'http://192.168.29.213:5000';
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000'
+        : 'https://backend-games-zeta-eight.vercel.app';
 
     const token = localStorage.getItem('token');
     const userJson = localStorage.getItem('user');
