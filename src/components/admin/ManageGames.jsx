@@ -8,7 +8,6 @@ const ManageGames = () => {
     const [formData, setFormData] = useState({
         gameName: '',
         gameLogo: null,
-        gameLogoUrl: '',
         iframs: ''
     });
     const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -45,8 +44,13 @@ const ManageGames = () => {
 
     const handleInputChange = (e) => {
         const { name, value, files } = e.target;
-        if (name === 'gameLogo') {
-            setFormData(prev => ({ ...prev, [name]: files[0] }));
+        if (name === 'gameLogo' && files && files[0]) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData(prev => ({ ...prev, [name]: reader.result }));
+            };
+            reader.readAsDataURL(file);
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -59,10 +63,9 @@ const ManageGames = () => {
             fd.append('gameName', formData.gameName);
 
             // Prioritize file upload, fallback to URL
+            // Prioritize file upload, fallback to URL
             if (formData.gameLogo) {
                 fd.append('gameLogo', formData.gameLogo);
-            } else if (formData.gameLogoUrl) {
-                fd.append('gameLogo', formData.gameLogoUrl);
             }
 
             // Using 'iframs' field for both gameUrl and iframs per backend expectation
@@ -111,7 +114,6 @@ const ManageGames = () => {
         setFormData({
             gameName: game.gameName || '',
             gameLogo: null,
-            gameLogoUrl: game.gameLogo && game.gameLogo.startsWith('http') ? game.gameLogo : '',
             iframs: (Array.isArray(game.iframs) ? game.iframs.join(', ') : game.iframs) || ''
         });
         window.scrollTo(0, 0);
@@ -119,7 +121,7 @@ const ManageGames = () => {
 
     const resetForm = () => {
         setEditingGame(null);
-        setFormData({ gameName: '', gameLogo: null, gameLogoUrl: '', iframs: '' });
+        setFormData({ gameName: '', gameLogo: null, iframs: '' });
         setFileInputKey(Date.now());
     };
 
@@ -191,31 +193,8 @@ const ManageGames = () => {
                             <input type="text" name="gameName" value={formData.gameName} onChange={handleInputChange} className="form-control" required />
                         </div>
                         <div className="col-md-4">
-                            <label className="form-label">Game Logo (Upload OR URL)</label>
-                            <div className="input-group mb-2">
-                                <span className="input-group-text"><i className="bi bi-upload"></i></span>
-                                <input key={fileInputKey} type="file" name="gameLogo" onChange={handleInputChange} className="form-control" accept="image/*" />
-                            </div>
-                            <input
-                                type="text"
-                                name="gameLogoUrl"
-                                value={formData.gameLogoUrl || ''}
-                                onChange={handleInputChange}
-                                className="form-control"
-                                placeholder="Or paste image URL here..."
-                            />
-                            {/* Preview */}
-                            {(formData.gameLogoUrl || formData.gameLogo) && (
-                                <div className="mt-2 text-center">
-                                    <img
-                                        src={formData.gameLogo ? URL.createObjectURL(formData.gameLogo) : formData.gameLogoUrl}
-                                        alt="Preview"
-                                        className="img-thumbnail"
-                                        style={{ height: '80px' }}
-                                        onError={(e) => { e.target.style.display = 'none'; }}
-                                    />
-                                </div>
-                            )}
+                            <label className="form-label">Game Logo (Upload)</label>
+                            <input key={fileInputKey} type="file" name="gameLogo" onChange={handleInputChange} className="form-control" accept="image/*" />
                         </div>
                         <div className="col-md-4">
                             <label className="form-label">Iframe URL (embed links)</label>
@@ -257,7 +236,7 @@ const ManageGames = () => {
                                             <img
                                                 src={
                                                     game.gameLogo
-                                                        ? (game.gameLogo.startsWith('http')
+                                                        ? (game.gameLogo.startsWith('http') || game.gameLogo.startsWith('data:')
                                                             ? game.gameLogo
                                                             : `${API_URL}${game.gameLogo.startsWith('/') ? '' : '/images/'}${game.gameLogo}`)
                                                         : 'placeholder'
