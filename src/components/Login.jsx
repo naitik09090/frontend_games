@@ -394,7 +394,7 @@ const Login = () => {
                                 setFormData({ username: '', password: '', confirmPassword: '' });
                             }}
                         >
-                            {isLogin ? 'CREATE ACCOUNT' : 'LOGIN INSTEAD'}
+                            {isLogin ? '' : 'LOGIN INSTEAD'}
                         </button>
                     </p>
                 </div>

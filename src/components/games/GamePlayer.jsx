@@ -110,8 +110,8 @@ const GamePlayer = () => {
 
     if (!game) return null;
 
-    // Use the 'file' field from games schema as the iframe source
-    const iframeSrc = game.iframs;
+    // Use the 'file' field or first item in 'iframs' array as source
+    const iframeSrc = Array.isArray(game.iframs) && game.iframs.length > 0 ? game.iframs[0] : game.iframs;
     // const iframeSrc = game.file;
 
     return (
@@ -305,6 +305,11 @@ const GamePlayer = () => {
                         max-width: none !important;
                         border-radius: 0 !important;
                         border: none !important;
+                    }
+                    
+                    .iframe-container::before {
+                        display: none !important;
+                        padding-top: 0 !important;
                     }
                     
                     .fullscreen-btn {

@@ -39,6 +39,7 @@ function App() {
 
           {/* Public Routes */}
           <Route path='/' element={<HomeMain />} />
+          <Route path='/game' element={<HomeMain />} />
           {/* <Route path='/gm-games' element={<GMGamesList />} /> */}
           <Route path='/game/:id' element={<GamePlayer />} />
 
