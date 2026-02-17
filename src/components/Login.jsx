@@ -385,7 +385,7 @@ const Login = () => {
 
                 <div className="text-center mt-4">
                     <p className="mb-0 text-white" style={{ fontSize: '0.9rem' }}>
-                        {isLogin ? "NEW PLAYER? " : "OLD SCHOOL? "}
+                        {isLogin ? "" : "OLD SCHOOL? "}
                         <button
                             className="btn btn-link p-0 text-gaming-link"
                             onClick={() => {
