@@ -164,7 +164,7 @@ const HomeMain = () => {
                     background: rgba(255, 255, 255, 0.05);
                     backdrop-filter: blur(10px);
                     border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 20px;
+                    border-radius: 10px;
                     overflow: hidden;
                     position: relative;
                     display: flex;
