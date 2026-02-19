@@ -148,23 +148,16 @@ const HomeMain = () => {
                     filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.3));
                 }
 
-                /* --- Masonry Grid --- */
-                .masonry-container {
-                    column-count: 5;
-                    column-gap: 20px;
-                    margin: 0 auto;
-                    padding: 0 20px 50px;
-                    max-width: 1600px;
+                /* --- Games Grid (Replaces Masonry) --- */
+                .games-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                    gap: 30px;
+                    padding: 0 0 50px;
                 }
 
-                .box {
-                    break-inside: avoid;
-                    margin-bottom: 20px;
-                    page-break-inside: avoid;
-                    display: inline-block;
-                    width: 100%;
-                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    will-change: transform;
+                .grid-column-full {
+                    grid-column: 1 / -1;
                 }
 
                 .game-card {
@@ -174,146 +167,89 @@ const HomeMain = () => {
                     border-radius: 20px;
                     overflow: hidden;
                     position: relative;
-                    display: block;
-                    transition: all 0.3s ease;
-                    height: auto; /* Allow natural height */
+                    display: flex;
+                    flex-direction: column;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    height: 100%;
+                    transform-origin: center center;
                 }
 
-                .box:hover {
-                    transform: translateY(-10px);
+                .game-card:hover {
+                    transform: translateY(-10px) scale(1.02);
+                    border-color: #00d2ff;
+                    box-shadow: 0 20px 40px rgba(0, 210, 255, 0.25);
                     z-index: 10;
                 }
 
-                .box:hover .game-card {
-                    border-color: #00d2ff;
-                    box-shadow: 0 15px 40px rgba(0, 210, 255, 0.3);
+                .game-logo-wrapper {
+                    position: relative;
+                    width: 100%;
+                    padding-top: 100%; /* Square Aspect Ratio (1:1) */
+                    overflow: hidden;
                 }
 
                 .game-logo {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
                     width: 100%;
-                    height: auto; /* Natural aspect ratio */
-                    min-height: 120px; /* Minimum height for very small images */
-                    max-height: none; /* Remove max height restriction */
-                    display: block;
-                    object-fit: cover;
-                    transition: transform 0.4s ease;
-                    will-change: transform;
+                    height: 100%;
+                    object-fit: cover; /* Fill the square without bars */
+                    transition: transform 0.5s ease;
                 }
 
-                .box:hover .game-logo {
-                    transform: scale(1.05);
-                }
-
-                /* Height Variants for Masonry Effect */
-                .box-small .game-logo {
-                    height: 180px;
-                    object-fit: cover;
-                }
-
-                .box-medium .game-logo {
-                    height: 240px;
-                    object-fit: cover;
-                }
-
-                .box-large .game-logo {
-                    height: 320px;
-                    object-fit: cover;
-                }
-
-                .box-xlarge .game-logo {
-                    height: 400px;
-                    object-fit: cover;
+                .game-card:hover .game-logo {
+                    transform: scale(1.1);
                 }
 
                 .game-overlay {
                     position: absolute;
                     inset: 0;
-                    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+                    background: linear-gradient(to top, rgba(15, 12, 41, 0.95) 0%, rgba(15, 12, 41, 0.6) 40%, transparent 100%);
                     display: flex;
                     align-items: flex-end;
-                    justify-content: center;
-                    padding: 20px;
+                    justify-content: flex-start;
+                    padding: 25px;
                     opacity: 0;
                     transition: opacity 0.3s ease;
                 }
 
-                .box:hover .game-overlay {
+                .game-card:hover .game-overlay {
                     opacity: 1;
                 }
 
-                @media (max-width: 1400px) { .masonry-container { column-count: 4; } }
-                @media (max-width: 1100px) { .masonry-container { column-count: 3; } }
-                @media (max-width: 800px) { .masonry-container { column-count: 2; } }
-                @media (max-width: 500px) { .masonry-container { column-count: 1; max-width: 500px; } }
-                /* --- Glass Modal --- */
-                .glass-modal .modal-content {
-                    background: rgba(15, 12, 41, 0.8) !important;
-                    backdrop-filter: blur(25px);
-                    border: 1px solid rgba(0, 210, 255, 0.2);
-                    border-radius: 24px;
-                    color: white;
+                .game-info {
+                    transform: translateY(20px);
+                    transition: transform 0.3s ease;
                 }
 
-                .glass-modal .modal-header {
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                .game-card:hover .game-info {
+                    transform: translateY(0);
                 }
 
-                .glass-modal .modal-footer {
-                    border-top: 1px solid rgba(255, 255, 255, 0.1);
-                }
-
-                .btn-gaming {
-                    background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
-                    border: none;
-                    color: white;
-                    font-weight: 700;
-                    border-radius: 10px;
-                    transition: all 0.3s ease;
-                }
-
-                .btn-gaming:hover {
-                    box-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
-                    transform: translateY(-2px);
-                    color: white;
-                }
-
-                @media (max-width: 1400px) { .masonry-container { column-count: 4; } }
-                @media (max-width: 1100px) { .masonry-container { column-count: 3; } }
-                @media (max-width: 768px) { 
-                    .masonry-container { 
-                        column-count: 2; 
-                        column-gap: 12px;
-                        padding: 0 12px 50px;
-                    } 
-                    .box { margin-bottom: 12px; }
-                    
-                    /* Clean Masonry Style for Mobile */
-                    .game-card { 
-                        border-radius: 14px; 
-                        border: 1px solid rgba(255,255,255,0.1);
-                        background: rgba(255, 255, 255, 0.05); /* Restore consistent background */
+                /* Mobile Adjustments */
+                @media (max-width: 768px) {
+                    .games-grid {
+                        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                        gap: 15px;
                     }
                     
-                    .game-logo {
-                        width: 100%;
-                        height: auto; /* Natural height */
-                        object-fit: contain;
-                        display: block;
+                    .game-card:hover {
+                        transform: none; /* Disable hover lift on touch devices */
                     }
-
-                    /* Minimalist Overlay */
+                    
                     .game-overlay {
-                        padding: 6px;
+                        opacity: 1; /* Always show overlay on mobile */
+                        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+                        padding: 15px;
                     }
-                    .game-overlay h5 { 
-                        font-size: 0.65rem; 
+
+                    .game-info {
+                        transform: none;
                     }
-                }
-                @media (max-width: 400px) {
-                    .masonry-container { column-count: 2; column-gap: 10px; padding: 0 10px 50px; }
-                    .box { margin-bottom: 10px; }
-                    .game-logo {
-                        object-fit: contain;
+                    
+                    .game-card h5 {
+                        font-size: 1rem;
                     }
                 }
                 `}
@@ -326,38 +262,6 @@ const HomeMain = () => {
                         <i className="bi bi-controller me-2 fs-3"></i>
                         GAMES
                     </a>
-                    {/* <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                        <span className="navbar-toggler-icon"></span>
-                    </button> */}
-                    {/* <div className="collapse navbar-collapse justify-content-end" id="navbarNav">
-                        <ul className="navbar-nav gap-2 align-items-center">
-                            {user ? (
-                                <>
-                                    <li className="nav-item me-2">
-                                        <button className="btn btn-outline-info btn-sm rounded-pill px-3" onClick={() => navigate('/admin')}>
-                                            <i className="bi bi-shield-lock me-1"></i> Admin Panel
-                                        </button>
-                                    </li>
-                                    <li className="nav-item me-2">
-                                        <span className="text-white-50 small">ACTIVE PLAYER: <strong className="text-white">{user.username}</strong></span>
-                                    </li>
-                                    <li className="nav-item">
-                                        <button className="btn btn-link text-danger text-decoration-none p-0" onClick={handleLogout}>
-                                            <i className="bi bi-power fs-5"></i>
-                                        </button>
-                                    </li>
-                                </>
-                            ) : (
-                                <>
-                                    <li className="nav-item">
-                                        <button className="btn btn-gaming px-4" onClick={() => navigate('/admin/login')}>
-                                            ADMIN LOGIN
-                                        </button>
-                                    </li>
-                                </>
-                            )}
-                        </ul>
-                    </div> */}
                 </div>
             </nav>
 
@@ -369,20 +273,20 @@ const HomeMain = () => {
                 </div>
 
                 {/* Games Grid */}
-                <div className="masonry-container">
+                <div className="games-grid">
                     {games.length === 0 ? (
-                        <div className="text-center py-5 w-100">
+                        <div className="text-center py-5 w-100 grid-column-full">
                             <p className="text-white-50">No games available at the moment.</p>
                         </div>
                     ) : (
-                        games.map((game, index) => {
-                            // Create varying heights for masonry effect
-                            const heightVariants = ['small', 'medium', 'large', 'xlarge'];
-                            const randomHeight = heightVariants[index % heightVariants.length];
-
-                            return (
-                                <div key={game._id} className={`box box-${randomHeight}`} style={{ animationDelay: `${index * 0.05}s` }}>
-                                    <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
+                        games.map((game, index) => (
+                            <div
+                                key={game._id}
+                                className="game-wrapper animate__animated animate__fadeInUp"
+                                style={{ animationDelay: `${index * 0.05}s` }}
+                            >
+                                <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
+                                    <div className="game-logo-wrapper">
                                         <img
                                             src={
                                                 game.gameLogo
@@ -399,41 +303,17 @@ const HomeMain = () => {
                                                 e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
                                             }}
                                         />
-                                        <div className="game-overlay">
+                                    </div>
+                                    <div className="game-overlay">
+                                        <div className="game-info">
                                             <h5 className="text-white fw-bold m-0">{game.gameName}</h5>
                                         </div>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-                {/* <div className="masonry-container">
-                    {games.length === 0 ? (
-                        <div className="text-center py-5 w-100">
-                            <p className="text-white-50">No games available at the moment.</p>
-                        </div>
-                    ) : (
-                        games.map((game, index) => (
-                            <div key={game._id} className="box" style={{ animationDelay: `${index * 0.05}s` }}>
-                                <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
-                                    <img
-                                        src={game.gameLogo?.startsWith('http') ? game.gameLogo : `${API_URL}${game.gameLogo?.startsWith('/') ? '' : '/'}${game.gameLogo}`}
-                                        alt={game.gameName}
-                                        className="game-logo"
-                                        loading="lazy"
-                                        onError={(e) => {
-                                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
-                                        }}
-                                    />
-                                    <div className="game-overlay">
-                                        <h5 className="text-white fw-bold m-0">{game.gameName}</h5>
                                     </div>
                                 </div>
                             </div>
                         ))
                     )}
-                </div> */}
+                </div>
 
                 {/* Loading More Spinner */}
                 {loadingMore && (

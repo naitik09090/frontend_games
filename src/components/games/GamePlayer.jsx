@@ -156,98 +156,111 @@ const GamePlayer = () => {
                     border: none !important;
                 }
 
-                /* --- Masonry Grid --- */
-                .masonry-container {
-                    column-count: 5;
-                    column-gap: 20px;
-                    max-width: 1200px;
-                    margin: 0 auto;
+                /* --- Games Grid (Replaces Masonry) --- */
+                .games-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                    gap: 30px;
+                    padding: 0 0 50px;
                 }
 
-                .box {
-                    break-inside: avoid;
-                    margin-bottom: 20px;
-                    page-break-inside: avoid;
-                    display: inline-block;
-                    width: 100%;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    will-change: transform;
+                .grid-column-full {
+                    grid-column: 1 / -1;
                 }
 
                 .game-card {
                     background: rgba(255, 255, 255, 0.05);
                     backdrop-filter: blur(10px);
                     border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 20px;
+                    border-radius: 10px;
                     overflow: hidden;
                     position: relative;
-                    display: block;
-                    transition: all 0.3s ease;
-                    height: auto;
+                    display: flex;
+                    flex-direction: column;
+                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    height: 100%;
+                    transform-origin: center center;
                 }
 
-                .box:hover {
-                    transform: translateY(-10px);
+                .game-card:hover {
+                    transform: translateY(-10px) scale(1.02);
+                    border-color: #00d2ff;
+                    box-shadow: 0 20px 40px rgba(0, 210, 255, 0.25);
                     z-index: 10;
                 }
 
-                .box:hover .game-card {
-                    border-color: #00d2ff;
-                    box-shadow: 0 15px 40px rgba(0, 210, 255, 0.3);
+                .game-logo-wrapper {
+                    position: relative;
+                    width: 100%;
+                    padding-top: 100%; /* Square Aspect Ratio (1:1) */
+                    overflow: hidden;
                 }
 
                 .game-logo {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
                     width: 100%;
-                    height: auto;
-                    min-height: 120px;
-                    max-height: none;
-                    display: block;
-                    object-fit: cover;
-                    transition: transform 0.4s ease;
-                    will-change: transform;
+                    height: 100%;
+                    object-fit: cover; /* Fill the square without bars */
+                    transition: transform 0.5s ease;
                 }
 
-                .box:hover .game-logo {
-                    transform: scale(1.05);
-                }
-
-                /* Height Variants for Masonry Effect */
-                .box-small .game-logo {
-                    height: 180px;
-                    object-fit: cover;
-                }
-
-                .box-medium .game-logo {
-                    height: 240px;
-                    object-fit: cover;
-                }
-
-                .box-large .game-logo {
-                    height: 320px;
-                    object-fit: cover;
-                }
-
-                .box-xlarge .game-logo {
-                    height: 400px;
-                    object-fit: cover;
+                .game-card:hover .game-logo {
+                    transform: scale(1.1);
                 }
 
                 .game-overlay {
                     position: absolute;
                     inset: 0;
-                    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+                    background: linear-gradient(to top, rgba(15, 12, 41, 0.95) 0%, rgba(15, 12, 41, 0.6) 40%, transparent 100%);
                     display: flex;
                     align-items: flex-end;
-                    justify-content: center;
-                    padding: 20px;
+                    justify-content: flex-start;
+                    padding: 25px;
                     opacity: 0;
                     transition: opacity 0.3s ease;
                 }
 
-                .box:hover .game-overlay {
+                .game-card:hover .game-overlay {
                     opacity: 1;
                 }
 
+                .game-info {
+                    transform: translateY(20px);
+                    transition: transform 0.3s ease;
+                }
+
+                .game-card:hover .game-info {
+                    transform: translateY(0);
+                }
+
+                /* Mobile Adjustments */
+                @media (max-width: 768px) {
+                    .games-grid {
+                        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                        gap: 15px;
+                    }
+                    
+                    .game-card:hover {
+                        transform: none; /* Disable hover lift on touch devices */
+                    }
+                    
+                    .game-overlay {
+                        opacity: 1; /* Always show overlay on mobile */
+                        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+                        padding: 15px;
+                    }
+
+                    .game-info {
+                        transform: none;
+                    }
+                    
+                    .game-card h5 {
+                        font-size: 1rem;
+                    }
+                }
+                
                 .gaming-title {
                     font-weight: 800;
                     background: linear-gradient(to right, #00d2ff, #3a7bd5);
@@ -271,10 +284,6 @@ const GamePlayer = () => {
                     transform: translateX(-5px);
                 }
 
-                @media (max-width: 1400px) { .masonry-container { column-count: 4; } }
-                @media (max-width: 1100px) { .masonry-container { column-count: 3; } }
-                @media (max-width: 800px) { .masonry-container { column-count: 2; } }
-                @media (max-width: 500px) { .masonry-container { column-count: 1; max-width: 500px; } }
                 /* Automatic Fullscreen on Mobile/Tablet Landscape */
                 @media (max-width: 1024px) and (orientation: landscape) {
                     .container.pt-3, 
@@ -303,7 +312,7 @@ const GamePlayer = () => {
                         width: 100% !important;
                         height: 100% !important;
                         max-width: none !important;
-                        border-radius: 0 !important;
+                        border-radius: 10px !important;
                         border: none !important;
                     }
                     
@@ -327,7 +336,6 @@ const GamePlayer = () => {
                 
                 /* Change 16:9 to almost full height on mobile portrait */
                 @media (max-width: 576px) and (orientation: portrait) { 
-                    .masonry-container { column-count: 2; } 
                     .container { padding-left: 10px; padding-right: 10px; }
                     .gaming-title { font-size: 1rem; }
                     
@@ -350,7 +358,7 @@ const GamePlayer = () => {
                         height: calc(100dvh - 60px) !important;
                         padding-top: 0 !important; 
                         margin-bottom: 0 !important;
-                        border-radius: 15px !important;
+                        border-radius: 10px !important;
                         border-bottom-left-radius: 0 !important;
                         border-bottom-right-radius: 0 !important;
                         touch-action: none; /* Prevent page scroll when touching game */
@@ -369,40 +377,11 @@ const GamePlayer = () => {
                         height: 100dvh !important;
                         z-index: 9999;
                         background: black;
-                        border-radius: 0 !important;
+                        border-radius: 10px !important;
                         touch-action: none;
                         overscroll-behavior: none;
                     }
-                    
-                    /* Mobile Masonry Styles */
-                    .game-card { 
-                        border-radius: 14px; 
-                        border: 1px solid rgba(255,255,255,0.1);
-                        background: rgba(255, 255, 255, 0.05);
-                    }
-                    
-                    .game-logo {
-                        width: 100%;
-                        height: auto;
-                        object-fit: contain;
-                        display: block;
-                    }
-
-                    .game-overlay {
-                        padding: 6px;
-                    }
-                    .game-overlay h5 { 
-                        font-size: 0.65rem; 
-                    }
                 }
-                @media (max-width: 400px) {
-                    .masonry-container { column-count: 2; column-gap: 10px; padding: 0 10px 50px; }
-                    .box { margin-bottom: 10px; }
-                    .game-logo {
-                        object-fit: contain;
-                    }
-                }
-
                 
                 /* Common Button Styles */
                 .fullscreen-btn {
@@ -448,9 +427,9 @@ const GamePlayer = () => {
                             </Link>
                         </div>
                         {/* Desktop: Centered title */}
-                        <h2 className="gaming-title text-center m-0 d-none d-md-block" style={{ pointerEvents: 'none' }}>{game.gameName}</h2>
+                        {/* <h2 className="gaming-title text-center m-0 d-none d-md-block" style={{ pointerEvents: 'none' }}>{game.gameName}</h2> */}
                         {/* Mobile: Left-aligned title */}
-                        <h2 className="gaming-title text-center m-0 d-block d-md-none fs-5 mt-2">{game.gameName}</h2>
+                        {/* <h2 className="gaming-title text-center m-0 d-block d-md-none fs-5 mt-2">{game.gameName}</h2> */}
                     </div>
                 )}
 
@@ -478,7 +457,7 @@ const GamePlayer = () => {
                                         height: '100%',
                                         overflow: 'hidden'
                                     }}
-                                    className={`${isFullscreen ? '' : 'rounded-5 shadow-lg'}`}
+                                    className={`${isFullscreen ? '' : 'rounded-3 shadow-lg'}`}
                                 ></iframe>
 
                                 {/* Fullscreen Toggle Button - Visible only on mobile/touch mainly, or generally helpful */}
@@ -499,27 +478,27 @@ const GamePlayer = () => {
                     </div>
                 </div>
 
-                <div className="container py-5">
-                    <div className="d-flex align-items-center mb-4">
+                <div className="container">
+                    <div className="d-flex align-items-center mb-5">
                         <div className="flex-grow-1 border-bottom border-secondary opacity-25"></div>
-                        <h3 className="mx-4 text-white-50 small fw-bold tracking-widest" style={{ letterSpacing: '4px' }}>
+                        <h3 className="mx-0 text-white-50 small fw-bold tracking-widest" style={{ letterSpacing: '4px' }}>
                             MORE ADVENTURES
                         </h3>
                         <div className="flex-grow-1 border-bottom border-secondary opacity-25"></div>
                     </div>
 
-                    <div className="masonry-container">
+                    <div className="games-grid">
                         {allGames
                             .filter(g => g._id !== id)
                             .slice(0, 22)
-                            .map((g, index) => {
-                                // Create varying heights for masonry effect
-                                const heightVariants = ['small', 'medium', 'large', 'xlarge'];
-                                const randomHeight = heightVariants[index % heightVariants.length];
-
-                                return (
-                                    <div key={g._id} className={`box box-${randomHeight}`} style={{ animationDelay: `${index * 0.1}s` }}>
-                                        <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
+                            .map((g, index) => (
+                                <div
+                                    key={g._id}
+                                    className="game-wrapper animate__animated animate__fadeInUp"
+                                    style={{ animationDelay: `${index * 0.05}s` }}
+                                >
+                                    <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
+                                        <div className="game-logo-wrapper">
                                             <img
                                                 src={
                                                     g.gameLogo
@@ -530,18 +509,21 @@ const GamePlayer = () => {
                                                 }
                                                 alt={g.gameName}
                                                 className="game-logo"
+                                                loading="lazy"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
                                                     e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
                                                 }}
                                             />
-                                            <div className="game-overlay">
+                                        </div>
+                                        <div className="game-overlay">
+                                            <div className="game-info">
                                                 <h5 className="text-white fw-bold m-0">{g.gameName}</h5>
                                             </div>
                                         </div>
                                     </div>
-                                );
-                            })}
+                                </div>
+                            ))}
                     </div>
                 </div>
             </div>
