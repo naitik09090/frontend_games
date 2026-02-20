@@ -1,0 +1,25 @@
+.featured-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 48px;
+    color: #00f7ff;
+    text-shadow: 0 0 10px #00f7ff, 0 0 20px #0088ff;
+    letter-spacing: 3px;
+}
+
+@keyframes glowPulse {
+    0% {
+        text-shadow: 0 0 5px #00f7ff;
+    }
+
+    50% {
+        text-shadow: 0 0 20px #00f7ff;
+    }
+
+    100% {
+        text-shadow: 0 0 5px #00f7ff;
+    }
+}
+
+.tagline {
+    animation: glowPulse 2s infinite ease-in-out;
+}

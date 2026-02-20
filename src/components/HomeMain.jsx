@@ -47,7 +47,7 @@ const HomeMain = () => {
             // Handle both response formats: {total, games} or just games array
             const gamesData = data.games || data;
 
-            console.log(`✅ Fetched ${gamesData.length} games (Page ${pageNum})`);
+            // console.log(`✅ Fetched ${gamesData.length} games (Page ${pageNum})`);
 
             if (gamesData.length < limit) {
                 hasMoreRef.current = false;
@@ -268,8 +268,8 @@ const HomeMain = () => {
             <div className="container py-5">
                 {/* Hero Section */}
                 <div className="text-center mb-5 animate__animated animate__fadeIn">
-                    <h1 className="display-4 fw-bold mb-2" style={{ letterSpacing: '-2px' }}>DISCOVER NEW REALMS</h1>
-                    <p className="text-white-50">Explore our curated collection of high-octane web games</p>
+                    <h1 className="featured-title fw-bold mb-2" style={{ letterSpacing: '-2px' }}>DISCOVER NEW REALMS</h1>
+                    <p className="tagline">Enter our hand-crafted universe of high-intensity web games.</p>
                 </div>
 
                 {/* Games Grid */}

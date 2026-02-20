@@ -13,7 +13,8 @@ const ManageGames = () => {
     const [openDropdownId, setOpenDropdownId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [fileInputKey, setFileInputKey] = useState(Date.now());
-    const itemsPerPage = 10;
+    const [itemsPerPage] = useState(10); // Fixed items per page
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000'
@@ -58,6 +59,9 @@ const ManageGames = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return; // Prevent double submission
+
+        setIsSubmitting(true);
         try {
             const fd = new FormData();
             fd.append('gameName', formData.gameName);
@@ -92,6 +96,8 @@ const ManageGames = () => {
         } catch (err) {
             console.error(err);
             alert(`Error: ${err.message}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -201,11 +207,22 @@ const ManageGames = () => {
                             <input type="text" name="iframs" value={formData.iframs} onChange={handleInputChange} className="form-control" placeholder="https://..." required />
                         </div>
                         <div className="col-12 mt-4">
-                            <button type="submit" className="btn btn-primary me-2 px-4">
-                                {editingGame ? 'Update Game' : 'Add Game'}
+                            <button
+                                type="submit"
+                                className="btn btn-primary me-2 px-4"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        {editingGame ? 'Updating...' : 'Adding...'}
+                                    </>
+                                ) : (
+                                    editingGame ? 'Update Game' : 'Add Game'
+                                )}
                             </button>
                             {editingGame && (
-                                <button type="button" onClick={resetForm} className="btn btn-secondary px-4">Cancel</button>
+                                <button type="button" onClick={resetForm} className="btn btn-secondary px-4" disabled={isSubmitting}>Cancel</button>
                             )}
                         </div>
                     </form>
