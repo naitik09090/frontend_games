@@ -16,6 +16,9 @@ export default defineConfig({
   },
   build: {
     // Split vendor libraries into separate cacheable chunks
+    cssCodeSplit: true,   // Each JS chunk gets its own CSS — stops one giant blocking bundle
+    cssMinify: true,
+    modulePreload: { polyfill: true },
     rollupOptions: {
       output: {
         manualChunks: {

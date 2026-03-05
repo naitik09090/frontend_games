@@ -1,23 +1,31 @@
 .game-player-gaming-wrapper {
     min-height: 100vh;
-    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
     font-family: 'Outfit', 'Inter', sans-serif;
     color: white;
+    position: relative;
+    isolation: isolate;
 }
 
-@keyframes gradientBG {
-    0% {
-        background-position: 0% 50%;
-    }
+.game-player-gaming-wrapper::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 20% 40%, rgba(0, 210, 255, 0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 80% at 80% 60%, rgba(58, 123, 213, 0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+    animation: ambientShift 20s ease-in-out infinite alternate;
+    will-change: opacity;
+}
 
-    50% {
-        background-position: 100% 50%;
+@keyframes ambientShift {
+    0% {
+        opacity: 0.6;
     }
 
     100% {
-        background-position: 0% 50%;
+        opacity: 1;
     }
 }
 
@@ -52,17 +60,20 @@
 }
 
 .game-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
+    background: rgba(20, 18, 48, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        border-color 0.4s ease,
+        box-shadow 0.4s ease;
     height: 100%;
     transform-origin: center center;
+    content-visibility: auto;
+    contain-intrinsic-size: 0 220px;
 }
 
 .game-card:hover {

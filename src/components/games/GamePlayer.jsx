@@ -20,13 +20,19 @@ const GamePlayer = () => {
 
     // Serve external image URLs via proxy — converts legacy GIF/PNG/ICO/JPG
     // logos to resized WebP (fixes Lighthouse image format & size warnings).
-    const getOptimizedImageSrc = (gameLogo) => {
+    const getOptimizedImageSrc = (gameLogo, size = 185) => {
         if (!gameLogo) return null;
         if (gameLogo.startsWith('data:')) return gameLogo; // already optimised base64 WebP
         const absoluteUrl = gameLogo.startsWith('http')
             ? gameLogo
             : `${API_URL}${gameLogo.startsWith('/') ? '' : '/images/'}${gameLogo}`;
-        return `${API_URL}/image-proxy?url=${encodeURIComponent(absoluteUrl)}`;
+        return `${API_URL}/image-proxy?url=${encodeURIComponent(absoluteUrl)}&w=${size}`;
+    };
+
+    // Returns srcset string with 1x (185px) and 2x (370px) for retina screens
+    const getOptimizedSrcSet = (gameLogo) => {
+        if (!gameLogo || gameLogo.startsWith('data:')) return undefined;
+        return `${getOptimizedImageSrc(gameLogo, 185)} 1x, ${getOptimizedImageSrc(gameLogo, 370)} 2x`;
     };
 
     useEffect(() => {
@@ -210,7 +216,9 @@ const GamePlayer = () => {
                                         <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
                                             <div className="game-logo-wrapper">
                                                 <img
-                                                    src={getOptimizedImageSrc(g.gameLogo) || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E'}
+                                                    src={getOptimizedImageSrc(g.gameLogo, 185) || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E'}
+                                                    srcSet={getOptimizedSrcSet(g.gameLogo)}
+                                                    sizes="185px"
                                                     alt={g.gameName}
                                                     className="game-logo"
                                                     width="185"
