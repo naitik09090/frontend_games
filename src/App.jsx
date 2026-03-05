@@ -2,10 +2,8 @@ import './App.css'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 
-// Eagerly load the home page (first paint critical)
-import HomeMain from './components/HomeMain.jsx'
-
-// Lazy-load all other routes — their JS only downloads when navigated to
+// Lazy-load all routes to minimize main chunk size
+const HomeMain = lazy(() => import('./components/HomeMain.jsx'))
 const Login = lazy(() => import('./components/Login.jsx'))
 const Form = lazy(() => import('./components/Form.jsx'))
 const GamePlayer = lazy(() => import('./components/games/GamePlayer.jsx'))
