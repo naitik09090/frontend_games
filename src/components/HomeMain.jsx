@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './HomeMain.css';
 // import stickmanLogo from '../assets/stickman.jpg';
 
 const HomeMain = () => {
@@ -30,6 +31,20 @@ const HomeMain = () => {
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000'
         : 'https://backend-games-phi.vercel.app';
+
+    // Route external image URLs through our proxy so they are served as
+    // resized WebP — fixes Lighthouse "Use modern image formats" & "Properly size images".
+    const getOptimizedImageSrc = (gameLogo) => {
+        if (!gameLogo) return null;
+        // Already a base64 WebP (new uploads) — use as-is
+        if (gameLogo.startsWith('data:')) return gameLogo;
+        // Build the absolute URL for old /images/... paths
+        const absoluteUrl = gameLogo.startsWith('http')
+            ? gameLogo
+            : `${API_URL}${gameLogo.startsWith('/') ? '' : '/images/'}${gameLogo}`;
+        // Route through proxy for format + size optimisation
+        return `${API_URL}/image-proxy?url=${encodeURIComponent(absoluteUrl)}`;
+    };
 
 
     const fetchGames = async (pageNum) => {
@@ -112,170 +127,7 @@ const HomeMain = () => {
 
     return (
         <div className="home-gaming-wrapper">
-            <style>
-                {`
-                .home-gaming-wrapper {
-                    min-height: 100vh;
-                    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #0f0c29);
-                    background-size: 400% 400%;
-                    animation: gradientBG 15s ease infinite;
-                    font-family: 'Outfit', 'Inter', sans-serif;
-                    color: white;
-                }
 
-                @keyframes gradientBG {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-
-                /* --- Glass Navbar --- */
-                .glass-nav {
-                    background: rgba(0, 0, 0, 0.45) !important;
-                    backdrop-filter: blur(15px);
-                    -webkit-backdrop-filter: blur(15px);
-                    border-bottom: 1px solid rgba(0, 210, 255, 0.3);
-                    padding: 15px 30px !important;
-                    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-                }
-
-                .navbar-brand {
-                    font-weight: 800;
-                    letter-spacing: -0.5px;
-                    background: linear-gradient(to right, #00d2ff, #3a7bd5);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.3));
-                }
-
-                /* --- Games Grid (Replaces Masonry) --- */
-                .games-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                    gap: 30px;
-                    padding: 0 0 50px;
-                }
-
-                .grid-column-full {
-                    grid-column: 1 / -1;
-                }
-
-                .game-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.1);
-                    border-radius: 10px;
-                    overflow: hidden;
-                    position: relative;
-                    display: flex;
-                    flex-direction: column;
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    height: 100%;
-                    transform-origin: center center;
-                }
-
-                .game-card:hover {
-                    transform: translateY(-10px) scale(1.02);
-                    border-color: #00d2ff;
-                    box-shadow: 0 20px 40px rgba(0, 210, 255, 0.25);
-                    z-index: 10;
-                }
-
-                .game-logo-wrapper {
-                    position: relative;
-                    width: 100%;
-                    padding-top: 100%; /* Square Aspect Ratio (1:1) */
-                    overflow: hidden;
-                }
-
-                .game-logo {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover; /* Fill the square without bars */
-                    transition: transform 0.5s ease;
-                }
-
-                .game-card:hover .game-logo {
-                    transform: scale(1.1);
-                }
-
-                .game-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(to top, rgba(15, 12, 41, 0.95) 0%, rgba(15, 12, 41, 0.6) 40%, transparent 100%);
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: flex-start;
-                    padding: 25px;
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                }
-
-                .game-card:hover .game-overlay {
-                    opacity: 1;
-                }
-
-                .game-info {
-                    transform: translateY(20px);
-                    transition: transform 0.3s ease;
-                }
-
-                .game-card:hover .game-info {
-                    transform: translateY(0);
-                }
-
-                /* Mobile Adjustments */
-                @media (max-width: 768px) {
-                    .games-grid {
-                        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                        gap: 15px;
-                    }
-                    
-                    .game-card:hover {
-                        transform: none; /* Disable hover lift on touch devices */
-                    }
-                    
-                    .game-overlay {
-                        opacity: 1; /* Always show overlay on mobile */
-                        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
-                        padding: 15px;
-                    }
-
-                    .game-info {
-                        transform: none;
-                    }
-                    
-                    .game-card .game-card-title {
-                        font-size: 1rem;
-                    }
-                }
-
-                /* Tablet — exactly 4 cards per row */
-                @media (min-width: 577px) and (max-width: 1024px) {
-                    .games-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                        gap: 18px;
-                    }
-                    .game-card:hover {
-                        transform: none;
-                    }
-                    .game-overlay {
-                        opacity: 1;
-                        background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%);
-                        padding: 14px;
-                    }
-                    .game-info {
-                        transform: none;
-                    }
-                    .game-card .game-card-title {
-                        font-size: 0.9rem;
-                    }
-                }
-                `}
-            </style>
 
             {/* Navbar */}
             <nav className="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
@@ -310,16 +162,13 @@ const HomeMain = () => {
                                 <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
                                     <div className="game-logo-wrapper">
                                         <img
-                                            src={
-                                                game.gameLogo
-                                                    ? (game.gameLogo.startsWith('http') || game.gameLogo.startsWith('data:')
-                                                        ? game.gameLogo
-                                                        : `${API_URL}${game.gameLogo.startsWith('/') ? '' : '/images/'}${game.gameLogo}`)
-                                                    : 'placeholder'
-                                            }
+                                            src={getOptimizedImageSrc(game.gameLogo) || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E'}
                                             alt={game.gameName}
                                             className="game-logo"
+                                            width="185"
+                                            height="185"
                                             loading="lazy"
+                                            decoding="async"
                                             onError={(e) => {
                                                 e.target.onerror = null;
                                                 e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
