@@ -248,7 +248,7 @@ const HomeMain = () => {
                         transform: none;
                     }
                     
-                    .game-card h5 {
+                    .game-card .game-card-title {
                         font-size: 1rem;
                     }
                 }
@@ -270,7 +270,7 @@ const HomeMain = () => {
                     .game-info {
                         transform: none;
                     }
-                    .game-card h5 {
+                    .game-card .game-card-title {
                         font-size: 0.9rem;
                     }
                 }
@@ -328,7 +328,7 @@ const HomeMain = () => {
                                     </div>
                                     <div className="game-overlay">
                                         <div className="game-info">
-                                            <h5 className="text-white fw-bold m-0">{game.gameName}</h5>
+                                            <p className="game-card-title text-white fw-bold m-0">{game.gameName}</p>
                                         </div>
                                     </div>
                                 </div>

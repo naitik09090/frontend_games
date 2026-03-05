@@ -260,7 +260,7 @@ const GamePlayer = () => {
                         transform: none;
                     }
                     
-                    .game-card h5 {
+                    .game-card .game-card-title {
                         font-size: 1rem;
                     }
                 }
@@ -282,7 +282,7 @@ const GamePlayer = () => {
                     .game-info {
                         transform: none;
                     }
-                    .game-card h5 {
+                    .game-card .game-card-title {
                         font-size: 0.9rem;
                     }
                 }
@@ -698,7 +698,7 @@ const GamePlayer = () => {
                                             </div>
                                             <div className="game-overlay">
                                                 <div className="game-info">
-                                                    <h5 className="text-white fw-bold m-0">{g.gameName}</h5>
+                                                    <p className="game-card-title text-white fw-bold m-0">{g.gameName}</p>
                                                 </div>
                                             </div>
                                         </div>

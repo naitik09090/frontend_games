@@ -1,16 +1,26 @@
 import './App.css'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense, useEffect } from 'react'
+
+// Eagerly load the home page (first paint critical)
 import HomeMain from './components/HomeMain.jsx'
-// import Stickman from './components/games/stickman.jsx'
-import Form from './components/Form.jsx'
-// import Doodle_Road from './components/games/DoodleRoad.jsx'
-import Login from './components/Login.jsx'
-import GamePlayer from './components/games/GamePlayer.jsx'
-// import GMGamesList from './components/gm_games/GMGamesList.jsx'
-import AdminLayout from './components/admin/AdminLayout.jsx'
-import DashboardHome from './components/admin/DashboardHome.jsx'
-import ManageGames from './components/admin/ManageGames.jsx'
-import { useEffect } from 'react'
+
+// Lazy-load all other routes — their JS only downloads when navigated to
+const Login = lazy(() => import('./components/Login.jsx'))
+const Form = lazy(() => import('./components/Form.jsx'))
+const GamePlayer = lazy(() => import('./components/games/GamePlayer.jsx'))
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout.jsx'))
+const DashboardHome = lazy(() => import('./components/admin/DashboardHome.jsx'))
+const ManageGames = lazy(() => import('./components/admin/ManageGames.jsx'))
+
+// Minimal loading fallback while lazy chunks download
+const PageLoader = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f0c29' }}>
+    <div className="spinner-border text-light" role="status">
+      <span className="visually-hidden">Loading...</span>
+    </div>
+  </div>
+)
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -34,37 +44,40 @@ function App() {
   return (
     <>
       <main id="main-content" className="no-select">
-        <Routes>
-          <Route path='/admin/login' element={<Login />} />
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path='/admin/login' element={<Login />} />
 
-          {/* Public Routes */}
-          <Route path='/' element={<HomeMain />} />
-          <Route path='/game' element={<HomeMain />} />
-          {/* <Route path='/gm-games' element={<GMGamesList />} /> */}
-          <Route path='/game/:id' element={<GamePlayer />} />
+            {/* Public Routes */}
+            <Route path='/' element={<HomeMain />} />
+            <Route path='/game' element={<HomeMain />} />
+            {/* <Route path='/gm-games' element={<GMGamesList />} /> */}
+            <Route path='/game/:id' element={<GamePlayer />} />
 
-          {/* Admin / Protected Routes */}
-          <Route path='/add-game' element={
-            <ProtectedRoute>
-              <Form />
-            </ProtectedRoute>
-          } />
+            {/* Admin / Protected Routes */}
+            <Route path='/add-game' element={
+              <ProtectedRoute>
+                <Form />
+              </ProtectedRoute>
+            } />
 
-          {/* Admin Dashboard Routes */}
-          <Route path='/admin' element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardHome />} />
-            <Route path="games" element={<ManageGames />} />
-          </Route>
+            {/* Admin Dashboard Routes */}
+            <Route path='/admin' element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardHome />} />
+              <Route path="games" element={<ManageGames />} />
+            </Route>
 
-        </Routes>
+          </Routes>
+        </Suspense>
       </main>
     </>
   )
 }
 
 export default App
+
