@@ -12,11 +12,15 @@
          Keeps the viewport from flashing white while the full bundle loads.
     ──────────────────────────────────────────────────────────────────────── -->
     <style>
+      :root {
+        --bs-body-bg: #0f0c29;
+        --bs-body-color: #fff;
+      }
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
       html,body{
         min-height:100vh;
-        background:#0f0c29;
-        color:#fff;
+        background:var(--bs-body-bg);
+        color:var(--bs-body-color);
         font-family:'Outfit','Inter',system-ui,sans-serif;
         -ms-overflow-style:none;
         scrollbar-width:none;

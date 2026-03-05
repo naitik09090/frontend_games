@@ -4,8 +4,19 @@ import './HomeMain.css';
 // import stickmanLogo from '../assets/stickman.jpg';
 
 const HomeMain = () => {
-    const [games, setGames] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // Initialize from cache for "Instant Load"
+    const [games, setGames] = useState(() => {
+        try {
+            const cached = localStorage.getItem('gamesCache');
+            return cached ? JSON.parse(cached) : [];
+        } catch (e) { return []; }
+    });
+    const [loading, setLoading] = useState(() => {
+        // Only show initial loading if we have NO cached games
+        try {
+            return !localStorage.getItem('gamesCache');
+        } catch (e) { return true; }
+    });
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState(null);
     const [selectedGame, setSelectedGame] = useState(null);
@@ -76,7 +87,14 @@ const HomeMain = () => {
                 hasMoreRef.current = true;
             }
 
-            setGames(prev => pageNum === 1 ? gamesData : [...prev, ...gamesData]);
+            setGames(prev => {
+                const newGames = pageNum === 1 ? gamesData : [...prev, ...gamesData];
+                // Update cache on page 1 fetch
+                if (pageNum === 1) {
+                    try { localStorage.setItem('gamesCache', JSON.stringify(newGames)); } catch (e) { }
+                }
+                return newGames;
+            });
         } catch (err) {
             console.error('❌ Error fetching games:', err.message);
             setError(err.message);
@@ -88,15 +106,7 @@ const HomeMain = () => {
     };
 
     useEffect(() => {
-        // Clear old cache to prevent quota errors
-        try {
-            localStorage.removeItem('gamesCache');
-            localStorage.removeItem('gamesCacheTime');
-        } catch (e) {
-            // Ignore cleanup errors
-        }
-
-        // Initial fetch
+        // Initial fetch - we keep existing cached games visible while updating
         pageRef.current = 1;
         hasMoreRef.current = true;
         fetchGames(1);
@@ -128,13 +138,12 @@ const HomeMain = () => {
         setSelectedGame(null);
     };
 
-    if (loading) return <div className="container py-5 text-center"><div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div></div>;
-    if (error) return <div className="container py-5 text-center text-danger">Error: {error}</div>;
+    // We no longer block the whole page with a spinner. 
+    // We render the shell (Navbar + Hero) immediately.
+    const showSkeletons = loading && games.length === 0;
 
     return (
         <div className="home-gaming-wrapper">
-
-
             {/* Navbar */}
             <nav className="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
                 <div className="container-fluid">
@@ -154,7 +163,16 @@ const HomeMain = () => {
 
                 {/* Games Grid */}
                 <div className="games-grid">
-                    {games.filter(game => game.status !== false).length === 0 ? (
+                    {showSkeletons ? (
+                        /* Show skeletons on first-ever load */
+                        [...Array(12)].map((_, i) => (
+                            <div key={`skel-${i}`} className="game-wrapper">
+                                <div className="skeleton-card" style={{ height: '220px', borderRadius: '10px' }}>
+                                    <div className="skeleton-img"></div>
+                                </div>
+                            </div>
+                        ))
+                    ) : games.filter(game => game.status !== false).length === 0 ? (
                         <div className="text-center py-5 w-100 grid-column-full">
                             <p className="text-white-50">No games available at the moment.</p>
                         </div>
@@ -202,6 +220,7 @@ const HomeMain = () => {
                         </div>
                     </div>
                 )}
+
 
                 {/* Game Details Modal */}
                 {/* {selectedGame && (

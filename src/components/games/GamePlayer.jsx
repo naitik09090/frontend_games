@@ -38,19 +38,20 @@ const GamePlayer = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch specific game data
-                const gameRes = await fetch(`${API_URL}/games/${id}`);
-                if (!gameRes.ok) throw new Error('Game not found');
-                const gameData = await gameRes.json();
-                setGame(gameData);
+                // Fetch specific game data only if we don't have it or need fresh info
+                if (!game) {
+                    const gameRes = await fetch(`${API_URL}/games/${id}`);
+                    if (!gameRes.ok) throw new Error('Game not found');
+                    const gameData = await gameRes.json();
+                    setGame(gameData);
+                }
 
-                // Fetch all games for the grid
+                // Fetch all games for the grid in background
                 const allGamesRes = await fetch(`${API_URL}/games`);
                 if (allGamesRes.ok) {
                     const allGamesData = await allGamesRes.json();
                     setAllGames(allGamesData.games || allGamesData);
-                    // Delay showing the bottom grid so the game iframe settles first
-                    setTimeout(() => setBottomReady(true), 600);
+                    setBottomReady(true);
                 }
 
                 setLoading(false);
@@ -105,9 +106,10 @@ const GamePlayer = () => {
         };
     }, [isFullscreen]);
 
-    if (loading) return (
-        <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="spinner-border text-light" role="status">
+    // Only show full page loader if we have NO game data at all
+    if (loading && !game) return (
+        <div className="game-player-gaming-wrapper d-flex justify-content-center align-items-center vh-100">
+            <div className="spinner-border text-info" role="status">
                 <span className="visually-hidden">Loading...</span>
             </div>
         </div>
