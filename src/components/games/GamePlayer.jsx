@@ -12,6 +12,7 @@ const GamePlayer = () => {
     const [loading, setLoading] = useState(!location.state?.gameData);
     const [error, setError] = useState(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [bottomReady, setBottomReady] = useState(false);
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000'
         : 'https://backend-games-phi.vercel.app';
@@ -33,6 +34,8 @@ const GamePlayer = () => {
                     const allGamesData = await allGamesRes.json();
                     // Handle both response formats: {total, games} or just games array
                     setAllGames(allGamesData.games || allGamesData);
+                    // Delay showing the bottom grid so the game iframe settles first
+                    setTimeout(() => setBottomReady(true), 600);
                 }
 
                 setLoading(false);
@@ -49,6 +52,7 @@ const GamePlayer = () => {
             // AND we haven't just optimistically set it (tough to check, but !game covers initial).
             // Actually, for instant switch, we want to allow the "stale" or "optimistic" game to show while fetching.
             if (!game) setLoading(true);
+            setBottomReady(false); // Reset on game switch
 
             fetchData();
             window.scrollTo(0, 0);
@@ -260,6 +264,28 @@ const GamePlayer = () => {
                         font-size: 1rem;
                     }
                 }
+
+                /* Tablet — exactly 4 cards per row */
+                @media (min-width: 577px) and (max-width: 1024px) {
+                    .games-grid {
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 18px;
+                    }
+                    .game-card:hover {
+                        transform: none;
+                    }
+                    .game-overlay {
+                        opacity: 1;
+                        background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%);
+                        padding: 14px;
+                    }
+                    .game-info {
+                        transform: none;
+                    }
+                    .game-card h5 {
+                        font-size: 0.9rem;
+                    }
+                }
                 
                 .gaming-title {
                     font-weight: 800;
@@ -382,7 +408,43 @@ const GamePlayer = () => {
                         overscroll-behavior: none;
                     }
                 }
-                
+
+                /* ── Tablet portrait (577px – 1024px) ── */
+                @media (min-width: 577px) and (max-width: 1024px) and (orientation: portrait) {
+                    /* Make the iframe take most of the viewport height */
+                    .mobile-game-container {
+                        height: calc(100dvh - 70px) !important;
+                        padding-top: 0 !important;
+                        margin-bottom: 0 !important;
+                        border-radius: 12px !important;
+                        border-bottom-left-radius: 0 !important;
+                        border-bottom-right-radius: 0 !important;
+                        touch-action: none;
+                    }
+
+                    .fullscreen-arena {
+                        margin-bottom: 0 !important;
+                    }
+
+                    /* Compact header on tablet portrait too */
+                    .btn-gaming-back {
+                        margin-bottom: 0 !important;
+                        font-size: 0.9rem;
+                    }
+
+                    .fullscreen-mode {
+                        position: fixed !important;
+                        top: 0; left: 0;
+                        width: 100% !important;
+                        height: 100dvh !important;
+                        z-index: 9999;
+                        background: black;
+                        border-radius: 0 !important;
+                        touch-action: none;
+                        overscroll-behavior: none;
+                    }
+                }
+
                 /* Common Button Styles */
                 .fullscreen-btn {
                     position: absolute;
@@ -414,6 +476,114 @@ const GamePlayer = () => {
                 * {
                     -ms-overflow-style: none !important;
                     scrollbar-width: none !important;
+                }
+                /* ── Bottom section always visible ── */
+                .bottom-section {
+                    opacity: 1;
+                    transform: none;
+                    pointer-events: auto;
+                }
+
+                /* ── Neon-glow gaming skeleton ── */
+                @keyframes neonPulse {
+                    0%   { box-shadow: 0 0 6px rgba(0,210,255,0.15), inset 0 0 10px rgba(0,210,255,0.05); border-color: rgba(0,210,255,0.15); }
+                    50%  { box-shadow: 0 0 18px rgba(0,210,255,0.4),  inset 0 0 20px rgba(0,210,255,0.12); border-color: rgba(0,210,255,0.45); }
+                    100% { box-shadow: 0 0 6px rgba(0,210,255,0.15),  inset 0 0 10px rgba(0,210,255,0.05); border-color: rgba(0,210,255,0.15); }
+                }
+                @keyframes scanline {
+                    0%   { top: -30%; }
+                    100% { top: 130%; }
+                }
+                @keyframes shimmerNeon {
+                    0%   { background-position: -400px 0; }
+                    100% { background-position:  400px 0; }
+                }
+                .skeleton-card {
+                    border-radius: 12px;
+                    overflow: hidden;
+                    background: rgba(0,210,255,0.03);
+                    border: 1px solid rgba(0,210,255,0.18);
+                    position: relative;
+                    animation: neonPulse 2s ease-in-out infinite;
+                }
+                /* Stagger neon pulse per card */
+                .skeleton-card:nth-child(2)  { animation-delay: 0.17s; }
+                .skeleton-card:nth-child(3)  { animation-delay: 0.34s; }
+                .skeleton-card:nth-child(4)  { animation-delay: 0.51s; }
+                .skeleton-card:nth-child(5)  { animation-delay: 0.68s; }
+                .skeleton-card:nth-child(6)  { animation-delay: 0.85s; }
+                .skeleton-card:nth-child(7)  { animation-delay: 1.02s; }
+                .skeleton-card:nth-child(8)  { animation-delay: 1.19s; }
+                .skeleton-card:nth-child(9)  { animation-delay: 1.36s; }
+                .skeleton-card:nth-child(10) { animation-delay: 1.53s; }
+                .skeleton-card:nth-child(11) { animation-delay: 1.70s; }
+                .skeleton-card:nth-child(12) { animation-delay: 1.87s; }
+                /* Scanline sweep */
+                .skeleton-card::before {
+                    content: '';
+                    position: absolute;
+                    left: 0; right: 0;
+                    height: 30%;
+                    background: linear-gradient(to bottom,
+                        transparent 0%,
+                        rgba(0,210,255,0.07) 50%,
+                        transparent 100%);
+                    animation: scanline 2s linear infinite;
+                    z-index: 2;
+                    pointer-events: none;
+                }
+                .skeleton-img {
+                    width: 100%;
+                    padding-top: 100%;
+                    background: linear-gradient(
+                        90deg,
+                        rgba(0,210,255,0.03) 25%,
+                        rgba(0,210,255,0.10) 50%,
+                        rgba(0,210,255,0.03) 75%
+                    );
+                    background-size: 400px 100%;
+                    animation: shimmerNeon 1.8s infinite linear;
+                    position: relative;
+                }
+                /* Pixel corner accents */
+                .skeleton-img::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background:
+                        linear-gradient(135deg, rgba(0,210,255,0.18) 0%, transparent 20%) top left,
+                        linear-gradient(225deg, rgba(0,210,255,0.18) 0%, transparent 20%) top right,
+                        linear-gradient(315deg, rgba(0,210,255,0.18) 0%, transparent 20%) bottom right,
+                        linear-gradient(45deg,  rgba(0,210,255,0.18) 0%, transparent 20%) bottom left;
+                    background-size: 20px 20px;
+                    background-repeat: no-repeat;
+                }
+                .skeleton-footer {
+                    padding: 10px 12px 12px;
+                }
+                .skeleton-bar {
+                    height: 10px;
+                    border-radius: 5px;
+                    background: linear-gradient(
+                        90deg,
+                        rgba(0,210,255,0.04) 25%,
+                        rgba(0,210,255,0.13) 50%,
+                        rgba(0,210,255,0.04) 75%
+                    );
+                    background-size: 400px 100%;
+                    animation: shimmerNeon 1.8s infinite linear;
+                    margin-bottom: 7px;
+                }
+                .skeleton-bar.short { width: 50%; }
+
+                /* ── Real cards stagger fade-in ── */
+                @keyframes cardReveal {
+                    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                .game-wrapper {
+                    opacity: 0;
+                    animation: cardReveal 0.45s ease forwards;
                 }
                 `}
             </style>
@@ -478,8 +648,8 @@ const GamePlayer = () => {
                     </div>
                 </div>
 
-                <div className="container">
-                    <div className="d-flex align-items-center mb-5">
+                <div className={`container bottom-section${bottomReady ? ' ready' : ''}`}>
+                    <div className="d-flex align-items-center py-5">
                         <div className="flex-grow-1 border-bottom border-secondary opacity-25"></div>
                         <h3 className="mx-0 text-white-50 small fw-bold tracking-widest" style={{ letterSpacing: '4px' }}>
                             MORE ADVENTURES
@@ -487,44 +657,55 @@ const GamePlayer = () => {
                         <div className="flex-grow-1 border-bottom border-secondary opacity-25"></div>
                     </div>
 
-                    <div className="games-grid">
-                        {allGames
-                            .filter(g => g._id !== id)
-                            .slice(0, 22)
-                            .map((g, index) => (
-                                <div
-                                    key={g._id}
-                                    className="game-wrapper animate__animated animate__fadeInUp"
-                                    style={{ animationDelay: `${index * 0.05}s` }}
-                                >
-                                    <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
-                                        <div className="game-logo-wrapper">
-                                            <img
-                                                src={
-                                                    g.gameLogo
-                                                        ? (g.gameLogo.startsWith('http') || g.gameLogo.startsWith('data:')
-                                                            ? g.gameLogo
-                                                            : `${API_URL}${g.gameLogo.startsWith('/') ? '' : '/images/'}${g.gameLogo}`)
-                                                        : 'placeholder'
-                                                }
-                                                alt={g.gameName}
-                                                className="game-logo"
-                                                loading="lazy"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="game-overlay">
-                                            <div className="game-info">
-                                                <h5 className="text-white fw-bold m-0">{g.gameName}</h5>
+                    {!bottomReady ? (
+                        /* ── Neon gaming skeleton ── */
+                        <div className="games-grid">
+                            {[...Array(12)].map((_, i) => (
+                                <div key={i} className="skeleton-card">
+                                    <div className="skeleton-img"></div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="games-grid">
+                            {allGames
+                                .filter(g => g._id !== id)
+                                .slice(0, 22)
+                                .map((g, index) => (
+                                    <div
+                                        key={g._id}
+                                        className="game-wrapper"
+                                        style={{ animationDelay: `${index * 0.05}s` }}
+                                    >
+                                        <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
+                                            <div className="game-logo-wrapper">
+                                                <img
+                                                    src={
+                                                        g.gameLogo
+                                                            ? (g.gameLogo.startsWith('http') || g.gameLogo.startsWith('data:')
+                                                                ? g.gameLogo
+                                                                : `${API_URL}${g.gameLogo.startsWith('/') ? '' : '/images/'}${g.gameLogo}`)
+                                                            : 'placeholder'
+                                                    }
+                                                    alt={g.gameName}
+                                                    className="game-logo"
+                                                    loading="lazy"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="game-overlay">
+                                                <div className="game-info">
+                                                    <h5 className="text-white fw-bold m-0">{g.gameName}</h5>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                    </div>
+                                ))}
+                        </div>
+                    )}
                 </div>
             </div>
             {/* <div className="container-fluid p-0">

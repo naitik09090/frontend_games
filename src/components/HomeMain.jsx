@@ -252,6 +252,28 @@ const HomeMain = () => {
                         font-size: 1rem;
                     }
                 }
+
+                /* Tablet — exactly 4 cards per row */
+                @media (min-width: 577px) and (max-width: 1024px) {
+                    .games-grid {
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 18px;
+                    }
+                    .game-card:hover {
+                        transform: none;
+                    }
+                    .game-overlay {
+                        opacity: 1;
+                        background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, transparent 100%);
+                        padding: 14px;
+                    }
+                    .game-info {
+                        transform: none;
+                    }
+                    .game-card h5 {
+                        font-size: 0.9rem;
+                    }
+                }
                 `}
             </style>
 
@@ -274,12 +296,12 @@ const HomeMain = () => {
 
                 {/* Games Grid */}
                 <div className="games-grid">
-                    {games.length === 0 ? (
+                    {games.filter(game => game.status !== false).length === 0 ? (
                         <div className="text-center py-5 w-100 grid-column-full">
                             <p className="text-white-50">No games available at the moment.</p>
                         </div>
                     ) : (
-                        games.map((game, index) => (
+                        games.filter(game => game.status !== false).map((game, index) => (
                             <div
                                 key={game._id}
                                 className="game-wrapper animate__animated animate__fadeInUp"

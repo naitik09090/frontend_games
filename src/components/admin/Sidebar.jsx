@@ -43,7 +43,7 @@ const Sidebar = () => {
         <>
             {/* Toggle Button */}
             <button
-                className="btn btn-dark position-fixed top-0 start-0 m-3"
+                className="btn btn-dark position-fixed top-0 start-0 m-2"
                 style={{ zIndex: 1050, display: (!isOpen || isMobile) ? 'block' : 'none' }}
                 onClick={toggleSidebar}
             >
