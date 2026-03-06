@@ -80,16 +80,7 @@
 
     <!-- Preconnects removed to satisfy Lighthouse "Unused preconnect" rule (fonts and icons are loaded locally) -->
 
-    <!-- ─── Bootstrap CSS ────────────────────────────────────────────────
-         MUST be render-blocking: Bootstrap sets fundamental layout rules
-         (box model, flex, grid, spacing) used on every element. Loading it
-         async (media=print trick) caused CLS 0.400 because all Bootstrap
-         styles applied AFTER initial paint, shifting every element at once.
-         Preload tells the browser to fetch it at high priority so blocking
-         time is minimal (typically < 50ms on fast connections).
-    ──────────────────────────────────────────────────────────────────────── -->
-    <link rel="preload" href="/bootstrap.min.css" as="style" />
-    <link rel="stylesheet" href="/bootstrap.min.css" />
+    <!-- Bootstrap CSS is now imported natively via main.jsx and purged through PostCSS during build! -->
 
     <!-- Bootstrap Icons CSS is completely inlined above to eliminate render-blocking network requests -->
   </head>

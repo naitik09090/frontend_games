@@ -8,26 +8,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      react: path.resolve(__dirname, 'node_modules/react'),
-      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-    },
-  },
   build: {
-    // Split vendor libraries into separate cacheable chunks
-    cssCodeSplit: true,   // Each JS chunk gets its own CSS — stops one giant blocking bundle
+    cssCodeSplit: true,
     cssMinify: true,
     modulePreload: { polyfill: true },
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'router-vendor': ['react-router-dom'],
-          'bootstrap-vendor': ['bootstrap'],
-        },
-      },
-    },
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor'; // Groups all node_modules into one generic vendor chunk instead of 50 tiny ones
+          }
+        }
+      }
+    }
   },
   server: {
     host: '0.0.0.0',
