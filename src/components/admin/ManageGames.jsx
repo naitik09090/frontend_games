@@ -139,10 +139,10 @@ const ManageGames = () => {
     const totalPages = Math.ceil(games.length / itemsPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+    // gameLogo is no longer returned from the list endpoint (stripped to reduce payload).
+    // Use the /games/:id/logo endpoint to fetch thumbnails on demand.
     const getLogoSrc = (game) => {
-        if (!game.gameLogo) return '';
-        if (game.gameLogo.startsWith('http') || game.gameLogo.startsWith('data:')) return game.gameLogo;
-        return `${API_URL}${game.gameLogo.startsWith('/') ? '' : '/images/'}${game.gameLogo}`;
+        return `${API_URL}/games/${game._id}/logo?w=50`;
     };
 
     const fallbackSvg = (size = 50) =>

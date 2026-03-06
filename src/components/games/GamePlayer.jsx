@@ -18,21 +18,31 @@ const GamePlayer = () => {
         ? 'http://localhost:5000'
         : 'https://backend-games-phi.vercel.app';
 
-    // Serve external image URLs via proxy — converts legacy GIF/PNG/ICO/JPG
-    // logos to resized WebP (fixes Lighthouse image format & size warnings).
+    // Returns a URL to serve the game's logo through the /games/:id/logo endpoint.
+    // The list endpoint no longer returns gameLogo (base64 blob) to keep payload tiny;
+    // instead we fetch the logo on-demand via this lightweight endpoint.
+    const getLogoSrc = (gameId, size = 240) => {
+        return `${API_URL}/games/${gameId}/logo?w=${size}`;
+    };
+
+    // w-descriptors let the browser pick by display width, not just DPR.
+    // 185w = mobile, 240w = desktop 1x (~220px slot), 480w = desktop 2x.
+    const getLogoSrcSet = (gameId) => {
+        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 480)} 480w`;
+    };
+
+    // sizes mirrors the CSS grid breakpoints
+    const LOGO_SIZES = '(max-width: 576px) 160px, (max-width: 1024px) calc(33vw - 15px), 220px';
+
+    // For the currently-playing game's logo, the full game object is fetched via /games/:id
+    // which still includes gameLogo. We keep the old helper for that case.
     const getOptimizedImageSrc = (gameLogo, size = 185) => {
         if (!gameLogo) return null;
-        if (gameLogo.startsWith('data:')) return gameLogo; // already optimised base64 WebP
+        if (gameLogo.startsWith('data:')) return gameLogo; // already base64 WebP stored in full game
         const absoluteUrl = gameLogo.startsWith('http')
             ? gameLogo
             : `${API_URL}${gameLogo.startsWith('/') ? '' : '/images/'}${gameLogo}`;
         return `${API_URL}/image-proxy?url=${encodeURIComponent(absoluteUrl)}&w=${size}`;
-    };
-
-    // Returns srcset string with 1x (185px) and 2x (370px) for retina screens
-    const getOptimizedSrcSet = (gameLogo) => {
-        if (!gameLogo || gameLogo.startsWith('data:')) return undefined;
-        return `${getOptimizedImageSrc(gameLogo, 185)} 1x, ${getOptimizedImageSrc(gameLogo, 370)} 2x`;
     };
 
     useEffect(() => {
@@ -218,9 +228,9 @@ const GamePlayer = () => {
                                         <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
                                             <div className="game-logo-wrapper">
                                                 <img
-                                                    src={getOptimizedImageSrc(g.gameLogo, 185) || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E'}
-                                                    srcSet={getOptimizedSrcSet(g.gameLogo)}
-                                                    sizes="185px"
+                                                    src={getLogoSrc(g._id, 240)}
+                                                    srcSet={getLogoSrcSet(g._id)}
+                                                    sizes={LOGO_SIZES}
                                                     alt={g.gameName}
                                                     className="game-logo"
                                                     width="185"

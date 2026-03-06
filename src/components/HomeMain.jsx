@@ -3,10 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import './HomeMain.css';
 // import stickmanLogo from '../assets/stickman.jpg';
 
+// Bump this version whenever the API response shape changes (e.g. fields removed).
+// Users' old localStorage entries will be discarded automatically.
+const GAMES_CACHE_VERSION = 'v2'; // v2 = gameLogo stripped from list response
+
 const HomeMain = () => {
-    // Initialize from cache for "Instant Load"
+    // Initialize from cache for "Instant Load" — discard if it belongs to an old version
     const [games, setGames] = useState(() => {
         try {
+            if (localStorage.getItem('gamesCacheVersion') !== GAMES_CACHE_VERSION) {
+                localStorage.removeItem('gamesCache');
+                return [];
+            }
             const cached = localStorage.getItem('gamesCache');
             return cached ? JSON.parse(cached) : [];
         } catch (e) { return []; }
@@ -14,6 +22,7 @@ const HomeMain = () => {
     const [loading, setLoading] = useState(() => {
         // Only show initial loading if we have NO cached games
         try {
+            if (localStorage.getItem('gamesCacheVersion') !== GAMES_CACHE_VERSION) return true;
             return !localStorage.getItem('gamesCache');
         } catch (e) { return true; }
     });
@@ -43,25 +52,23 @@ const HomeMain = () => {
         ? 'http://localhost:5000'
         : 'https://backend-games-phi.vercel.app';
 
-    // Route external image URLs through our proxy so they are served as
-    // resized WebP — fixes Lighthouse "Use modern image formats" & "Properly size images".
-    const getOptimizedImageSrc = (gameLogo, size = 185) => {
-        if (!gameLogo) return null;
-        // Already a base64 WebP (new uploads) — use as-is
-        if (gameLogo.startsWith('data:')) return gameLogo;
-        // Build the absolute URL for old /images/... paths
-        const absoluteUrl = gameLogo.startsWith('http')
-            ? gameLogo
-            : `${API_URL}${gameLogo.startsWith('/') ? '' : '/images/'}${gameLogo}`;
-        // Route through proxy for format + size optimisation
-        return `${API_URL}/image-proxy?url=${encodeURIComponent(absoluteUrl)}&w=${size}`;
+    // Returns a URL to serve the game's logo through the /games/:id/logo endpoint.
+    // The list endpoint no longer returns gameLogo (base64 blob) to keep payload tiny.
+    const getLogoSrc = (gameId, size = 240) => {
+        return `${API_URL}/games/${gameId}/logo?w=${size}`;
     };
 
-    // Returns srcset string with 1x (185px) and 2x (370px) for retina screens
-    const getOptimizedSrcSet = (gameLogo) => {
-        if (!gameLogo || gameLogo.startsWith('data:')) return undefined;
-        return `${getOptimizedImageSrc(gameLogo, 185)} 1x, ${getOptimizedImageSrc(gameLogo, 370)} 2x`;
+    // Use w-descriptors instead of 1x/2x so the browser picks by DISPLAY WIDTH,
+    // not just device pixel ratio. This lets Lighthouse verify no over-serving.
+    // Grid: minmax(160px mobile) → minmax(220px desktop, up to ~280px on wide screens).
+    // 185w covers mobile, 240w covers desktop 1x, 480w covers desktop 2x.
+    const getLogoSrcSet = (gameId) => {
+        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 480)} 480w`;
     };
+
+    // sizes mirrors the CSS grid breakpoints so the browser picks the smallest w
+    // that is >= (slot_width × device_pixel_ratio).
+    const LOGO_SIZES = '(max-width: 576px) 160px, (max-width: 1024px) calc(33vw - 15px), 240px';
 
 
     const fetchGames = async (pageNum) => {
@@ -89,9 +96,12 @@ const HomeMain = () => {
 
             setGames(prev => {
                 const newGames = pageNum === 1 ? gamesData : [...prev, ...gamesData];
-                // Update cache on page 1 fetch
+                // Update cache on page 1 fetch (no gameLogo in payload now — safe to cache)
                 if (pageNum === 1) {
-                    try { localStorage.setItem('gamesCache', JSON.stringify(newGames)); } catch (e) { }
+                    try {
+                        localStorage.setItem('gamesCache', JSON.stringify(newGames));
+                        localStorage.setItem('gamesCacheVersion', GAMES_CACHE_VERSION);
+                    } catch (e) { }
                 }
                 return newGames;
             });
@@ -156,7 +166,7 @@ const HomeMain = () => {
 
             <div className="container py-5">
                 {/* Hero Section */}
-                <div className="text-center mb-5 animate__animated animate__fadeIn">
+                <div className="text-center mb-5 hero-section">
                     <h1 className="featured-title fw-bold mb-2" style={{ letterSpacing: '-2px' }}>DISCOVER NEW REALMS</h1>
                     <p className="tagline">Enter our hand-crafted universe of high-intensity web games.</p>
                 </div>
@@ -180,15 +190,15 @@ const HomeMain = () => {
                         games.filter(game => game.status !== false).map((game, index) => (
                             <div
                                 key={game._id}
-                                className="game-wrapper animate__animated animate__fadeInUp"
-                                style={{ animationDelay: `${index * 0.05}s` }}
+                                className="game-wrapper"
+                                style={index < 8 ? { animationDelay: `${index * 0.05}s` } : undefined}
                             >
                                 <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
                                     <div className="game-logo-wrapper">
                                         <img
-                                            src={getOptimizedImageSrc(game.gameLogo, 185) || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E'}
-                                            srcSet={getOptimizedSrcSet(game.gameLogo)}
-                                            sizes="185px"
+                                            src={getLogoSrc(game._id, 240)}
+                                            srcSet={getLogoSrcSet(game._id)}
+                                            sizes={LOGO_SIZES}
                                             alt={game.gameName}
                                             className="game-logo"
                                             width="185"
