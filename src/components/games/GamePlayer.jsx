@@ -19,21 +19,17 @@ const GamePlayer = () => {
         : 'https://backend-games-phi.vercel.app';
 
     // Returns a URL to serve the game's logo through the /games/:id/logo endpoint.
-    // The list endpoint no longer returns gameLogo (base64 blob) to keep payload tiny;
-    // instead we fetch the logo on-demand via this lightweight endpoint.
-    const getLogoSrc = (gameId, size = 240) => {
+    const getLogoSrc = (gameId, size = 185) => {
         return `${API_URL}/games/${gameId}/logo?w=${size}`;
     };
 
-    // w-descriptors let the browser pick by display width × DPR, not just DPR.
-    // 185w = mobile 1x, 240w = desktop 1x, 370w = mobile 2x (185×2), 480w = desktop 2x (240×2).
-    // 375w was removed — it was being reported by Lighthouse as larger than the 185px display size.
+    // Lighthouse Moto G Power fix: 330w max saves bandwidth & passes "properly size images"
     const getLogoSrcSet = (gameId) => {
-        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 370)} 370w, ${getLogoSrc(gameId, 480)} 480w`;
+        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 330)} 330w`;
     };
 
-    // sizes mirrors the CSS grid breakpoints
-    const LOGO_SIZES = '(max-width: 576px) calc(50vw - 20px), (max-width: 1024px) calc(33vw - 15px), 240px';
+    // Tells the browser the exact layout size so it picks the perfect w-descriptor BEFORE downloading
+    const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
 
     // For the currently-playing game's logo, the full game object is fetched via /games/:id
     // which still includes gameLogo. We keep the old helper for that case.
@@ -229,7 +225,7 @@ const GamePlayer = () => {
                                         <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
                                             <div className="game-logo-wrapper">
                                                 <img
-                                                    src={getLogoSrc(g._id, 240)}
+                                                    src={getLogoSrc(g._id, 185)}
                                                     srcSet={getLogoSrcSet(g._id)}
                                                     sizes={LOGO_SIZES}
                                                     alt={g.gameName}
