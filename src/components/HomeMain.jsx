@@ -61,14 +61,18 @@ const HomeMain = () => {
     // Use w-descriptors instead of 1x/2x so the browser picks by DISPLAY WIDTH,
     // not just device pixel ratio. This lets Lighthouse verify no over-serving.
     // Grid: minmax(160px mobile) → minmax(220px desktop, up to ~280px on wide screens).
-    // 185w covers mobile, 240w covers desktop 1x, 480w covers desktop 2x.
+    // 185w  = mobile 1x (~186px slot)
+    // 240w  = desktop 1x (~220-240px slot)
+    // 375w  = mobile 2x (186px × 2 DPR = 372px → picks 375w)
+    // 480w  = desktop 2x (240px × 2 DPR = 480px)
     const getLogoSrcSet = (gameId) => {
-        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 480)} 480w`;
+        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 375)} 375w, ${getLogoSrc(gameId, 480)} 480w`;
     };
 
     // sizes mirrors the CSS grid breakpoints so the browser picks the smallest w
     // that is >= (slot_width × device_pixel_ratio).
-    const LOGO_SIZES = '(max-width: 576px) 160px, (max-width: 1024px) calc(33vw - 15px), 240px';
+    // Mobile: calc(50vw-20px) ≈ 187px on 412px Lighthouse viewport (NOT 160px — that was too small).
+    const LOGO_SIZES = '(max-width: 576px) calc(50vw - 20px), (max-width: 1024px) calc(33vw - 15px), 240px';
 
 
     const fetchGames = async (pageNum) => {

@@ -2,9 +2,12 @@ import './App.css'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 
-// Lazy-load all routes to minimize main chunk size
-import HomeMain from './components/HomeMain.jsx'
-import GamePlayer from './components/games/GamePlayer.jsx'
+// Lazy-load ALL routes so each page only downloads the JS it actually needs.
+// Lighthouse was flagging 25.8 KiB of unused JS because HomeMain + GamePlayer
+// were eagerly bundled together — GamePlayer was unused on the home page and
+// vice versa.
+const HomeMain = lazy(() => import('./components/HomeMain.jsx'))
+const GamePlayer = lazy(() => import('./components/games/GamePlayer.jsx'))
 const Login = lazy(() => import('./components/Login.jsx'))
 const Form = lazy(() => import('./components/Form.jsx'))
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout.jsx'))
