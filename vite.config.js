@@ -16,7 +16,13 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            return 'vendor'; // Groups all node_modules into one generic vendor chunk instead of 50 tiny ones
+            if (id.includes('react-router-dom') || id.includes('@remix-run') || id.includes('react-router')) {
+              return 'react-router';
+            }
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'react-core';
+            }
+            return 'vendor';
           }
         }
       }
