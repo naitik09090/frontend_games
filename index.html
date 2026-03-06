@@ -40,11 +40,13 @@
       }
       @keyframes _spin{to{transform:rotate(360deg)}}
 
-      /* font-display swap so text renders immediately with system font */
+      /* Bootstrap Icons font — font-display:swap prevents CLS from icon font swap */
       @font-face {
         font-family: "bootstrap-icons";
         src: url("/bootstrap-icons.woff2") format("woff2");
         font-display: swap;
+        font-weight: normal;
+        font-style: normal;
       }
     </style>
 
@@ -53,30 +55,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!-- ─── Bootstrap CSS — loaded async (non-blocking) ─────────────────
-         media="print" trick: browser fetches it at low priority (non-blocking),
-         onload swaps media to "all" so it applies normally once downloaded.
+    <!-- ─── Bootstrap CSS ────────────────────────────────────────────────
+         MUST be render-blocking: Bootstrap sets fundamental layout rules
+         (box model, flex, grid, spacing) used on every element. Loading it
+         async (media=print trick) caused CLS 0.400 because all Bootstrap
+         styles applied AFTER initial paint, shifting every element at once.
+         Preload tells the browser to fetch it at high priority so blocking
+         time is minimal (typically < 50ms on fast connections).
     ──────────────────────────────────────────────────────────────────────── -->
-    <link
-      rel="stylesheet"
-      href="/bootstrap.min.css"
-      media="print"
-      onload="this.media='all'"
-    />
-    <noscript>
-      <link rel="stylesheet" href="/bootstrap.min.css" />
-    </noscript>
+    <link rel="preload" href="/bootstrap.min.css" as="style" />
+    <link rel="stylesheet" href="/bootstrap.min.css" />
 
-    <!-- ─── Bootstrap Icons CSS — non-blocking (preload → swap) ──────── -->
-    <link
-      rel="preload"
-      href="/bootstrap-icons.css"
-      as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
-    />
-    <noscript>
-      <link rel="stylesheet" href="/bootstrap-icons.css" />
-    </noscript>
+    <!-- ─── Bootstrap Icons CSS ─────────────────────────────────────────
+         Load synchronously so icon dimensions are known at first paint.
+         The @font-face above uses font-display:swap so text renders with
+         a fallback glyph first (no invisible text, no layout shift).
+    ──────────────────────────────────────────────────────────────────────── -->
+    <link rel="stylesheet" href="/bootstrap-icons.css" />
   </head>
   <body>
     <div id="root"></div>

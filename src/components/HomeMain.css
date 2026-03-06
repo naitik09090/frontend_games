@@ -69,14 +69,6 @@
     grid-column: 1 / -1;
 }
 
-.game-wrapper {
-    /* content-visibility here means the browser completely skips
-       style, layout, and paint for cards outside the viewport.
-       contain-intrinsic-size reserves space so the scrollbar doesn't jump. */
-    content-visibility: auto;
-    contain-intrinsic-size: 0 240px;
-}
-
 .game-card {
     background: rgba(20, 18, 48, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -226,7 +218,12 @@
     background: rgba(0, 210, 255, 0.08);
 }
 
-.game-wrapper {`r`n    opacity: 0;`r`n    animation: cardReveal 0.45s ease forwards;`r`n    will-change: opacity, transform;`r`n}
+.game-wrapper {
+    opacity: 0;
+    animation: cardReveal 0.45s ease forwards;
+    will-change: opacity, transform;
+}
+
 
 @keyframes cardReveal {
     from {
@@ -239,12 +236,20 @@
         transform: translateY(0) scale(1);
     }
 }
+
 /* Hero section simple fade-in (replaces heavy animate.css library call) */
 .hero-section {
     animation: heroFade 0.5s ease forwards;
 }
 
 @keyframes heroFade {
-    from { opacity: 0; transform: translateY(-8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
