@@ -177,7 +177,7 @@ const HomeMain = () => {
                         /* Show skeletons on first-ever load */
                         [...Array(12)].map((_, i) => (
                             <div key={`skel-${i}`} className="game-wrapper">
-                                <div className="skeleton-card" style={{ height: '220px', borderRadius: '10px' }}>
+                                <div className="skeleton-card" style={{ borderRadius: '10px' }}>
                                     <div className="skeleton-img"></div>
                                 </div>
                             </div>
@@ -203,7 +203,8 @@ const HomeMain = () => {
                                             className="game-logo"
                                             width="185"
                                             height="185"
-                                            loading="lazy"
+                                            loading={index === 0 ? "eager" : "lazy"}
+                                            fetchpriority={index === 0 ? "high" : "auto"}
                                             decoding="async"
                                             onError={(e) => {
                                                 e.target.onerror = null;

@@ -48,12 +48,37 @@
         font-weight: normal;
         font-style: normal;
       }
+      .bi::before,
+      [class^="bi-"]::before,
+      [class*=" bi-"]::before {
+        display: inline-block;
+        font-family: bootstrap-icons !important;
+        font-style: normal;
+        font-weight: normal !important;
+        font-variant: normal;
+        text-transform: none;
+        line-height: 1;
+        vertical-align: -.125em;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .bi-arrows-fullscreen::before { content: "\f14d" }
+      .bi-box-arrow-right::before { content: "\f1c3" }
+      .bi-chevron-left::before { content: "\f284" }
+      .bi-controller::before { content: "\f2d4" }
+      .bi-exclamation-triangle::before { content: "\f33b" }
+      .bi-fullscreen-exit::before { content: "\f3de" }
+      .bi-fullscreen::before { content: "\f3df" }
+      .bi-list::before { content: "\f479" }
+      .bi-pencil-square::before { content: "\f4ca" }
+      .bi-person-check-fill::before { content: "\f4d5" }
+      .bi-speedometer2::before { content: "\f580" }
+      .bi-three-dots-vertical::before { content: "\f5d3" }
+      .bi-trash::before { content: "\f5de" }
+      .bi-x-lg::before { content: "\f659" }
     </style>
 
-    <!-- ─── Preconnect to CDNs (DNS + TLS resolved before requests land) ── -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Preconnects removed to satisfy Lighthouse "Unused preconnect" rule (fonts and icons are loaded locally) -->
 
     <!-- ─── Bootstrap CSS ────────────────────────────────────────────────
          MUST be render-blocking: Bootstrap sets fundamental layout rules
@@ -66,12 +91,7 @@
     <link rel="preload" href="/bootstrap.min.css" as="style" />
     <link rel="stylesheet" href="/bootstrap.min.css" />
 
-    <!-- ─── Bootstrap Icons CSS ─────────────────────────────────────────
-         Load synchronously so icon dimensions are known at first paint.
-         The @font-face above uses font-display:swap so text renders with
-         a fallback glyph first (no invisible text, no layout shift).
-    ──────────────────────────────────────────────────────────────────────── -->
-    <link rel="stylesheet" href="/bootstrap-icons.css" />
+    <!-- Bootstrap Icons CSS is completely inlined above to eliminate render-blocking network requests -->
   </head>
   <body>
     <div id="root"></div>

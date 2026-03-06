@@ -232,7 +232,8 @@ const GamePlayer = () => {
                                                     className="game-logo"
                                                     width="185"
                                                     height="185"
-                                                    loading="lazy"
+                                                    loading={index === 0 ? "eager" : "lazy"}
+                                                    fetchpriority={index === 0 ? "high" : "auto"}
                                                     decoding="async"
                                                     onError={(e) => {
                                                         e.target.onerror = null;
