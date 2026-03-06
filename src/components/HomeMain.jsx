@@ -58,20 +58,22 @@ const HomeMain = () => {
         return `${API_URL}/games/${gameId}/logo?w=${size}`;
     };
 
-    // Use w-descriptors instead of 1x/2x so the browser picks by DISPLAY WIDTH,
-    // not just device pixel ratio. This lets Lighthouse verify no over-serving.
-    // Grid: minmax(160px mobile) → minmax(220px desktop, up to ~280px on wide screens).
-    // 185w  = mobile 1x (~186px slot)
-    // 240w  = desktop 1x (~220-240px slot)
-    // 375w  = mobile 2x (186px × 2 DPR = 372px → picks 375w)
-    // 480w  = desktop 2x (240px × 2 DPR = 480px)
+    // Use w-descriptors so the browser picks by DISPLAY WIDTH × DPR.
+    // Slot sizes:
+    //   mobile  1x ≈ 185px  → need 185w image
+    //   mobile  2x ≈ 370px  → need 370w image (185 × 2)
+    //   tablet  1x ≈ 240px  → need 240w image
+    //   desktop 2x ≈ 480px  → need 480w image (240 × 2)
+    // NOTE: 375w was removed — it caused Lighthouse to flag the image as oversized
+    //       because 375 > 185 (the reported display dimension).
     const getLogoSrcSet = (gameId) => {
-        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 375)} 375w, ${getLogoSrc(gameId, 480)} 480w`;
+        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 370)} 370w, ${getLogoSrc(gameId, 480)} 480w`;
     };
 
-    // sizes mirrors the CSS grid breakpoints so the browser picks the smallest w
-    // that is >= (slot_width × device_pixel_ratio).
-    // Mobile: calc(50vw-20px) ≈ 187px on 412px Lighthouse viewport (NOT 160px — that was too small).
+    // sizes tells the browser how wide the image slot actually is at each breakpoint.
+    // Mobile (<576px): cards are 2-per-row → slot ≈ 50vw-20px.
+    // Tablet/small-desktop (<1024px): 3-per-row → ~33vw-15px.
+    // Large desktop: fixed 240px.
     const LOGO_SIZES = '(max-width: 576px) calc(50vw - 20px), (max-width: 1024px) calc(33vw - 15px), 240px';
 
 

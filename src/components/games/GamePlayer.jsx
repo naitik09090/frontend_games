@@ -25,14 +25,15 @@ const GamePlayer = () => {
         return `${API_URL}/games/${gameId}/logo?w=${size}`;
     };
 
-    // w-descriptors let the browser pick by display width, not just DPR.
-    // 185w = mobile, 240w = desktop 1x (~220px slot), 480w = desktop 2x.
+    // w-descriptors let the browser pick by display width × DPR, not just DPR.
+    // 185w = mobile 1x, 240w = desktop 1x, 370w = mobile 2x (185×2), 480w = desktop 2x (240×2).
+    // 375w was removed — it was being reported by Lighthouse as larger than the 185px display size.
     const getLogoSrcSet = (gameId) => {
-        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 480)} 480w`;
+        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 370)} 370w, ${getLogoSrc(gameId, 480)} 480w`;
     };
 
     // sizes mirrors the CSS grid breakpoints
-    const LOGO_SIZES = '(max-width: 576px) 160px, (max-width: 1024px) calc(33vw - 15px), 220px';
+    const LOGO_SIZES = '(max-width: 576px) calc(50vw - 20px), (max-width: 1024px) calc(33vw - 15px), 240px';
 
     // For the currently-playing game's logo, the full game object is fetched via /games/:id
     // which still includes gameLogo. We keep the old helper for that case.
