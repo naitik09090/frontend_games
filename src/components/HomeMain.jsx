@@ -204,7 +204,7 @@ const HomeMain = () => {
                                             width="185"
                                             height="185"
                                             loading={index < 4 ? "eager" : "lazy"}
-                                            fetchpriority={index < 4 ? "high" : "auto"}
+                                            fetchPriority={index < 4 ? "high" : "auto"}
                                             decoding="async"
                                             onError={(e) => {
                                                 e.target.onerror = null;

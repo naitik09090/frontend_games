@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import './GamePlayer.css';
+
+// Lazy load the 'More Adventures' grid to reduce initial JS payload for the main game player.
+const MoreGamesGrid = lazy(() => import('./MoreGamesGrid.jsx'));
 
 const GamePlayer = () => {
     const { id } = useParams();
@@ -18,18 +21,7 @@ const GamePlayer = () => {
         ? 'http://localhost:5000'
         : 'https://backend-games-phi.vercel.app';
 
-    // Returns a URL to serve the game's logo through the /games/:id/logo endpoint.
-    const getLogoSrc = (gameId, size = 185) => {
-        return `${API_URL}/games/${gameId}/logo?w=${size}`;
-    };
 
-    // Lighthouse Moto G Power fix: 330w max saves bandwidth & passes "properly size images"
-    const getLogoSrcSet = (gameId) => {
-        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 330)} 330w`;
-    };
-
-    // Tells the browser the exact layout size so it picks the perfect w-descriptor BEFORE downloading
-    const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
 
     // For the currently-playing game's logo, the full game object is fetched via /games/:id
     // which still includes gameLogo. We keep the old helper for that case.
@@ -53,8 +45,9 @@ const GamePlayer = () => {
                     setGame(gameData);
                 }
 
-                // Fetch all games for the grid in background
-                const allGamesRes = await fetch(`${API_URL}/games`);
+                // Only fetch enough games for the "More Adventures" grid (e.g. 24)
+                // This reduces the JSON payload size significantly.
+                const allGamesRes = await fetch(`${API_URL}/games?limit=24`);
                 if (allGamesRes.ok) {
                     const allGamesData = await allGamesRes.json();
                     setAllGames(allGamesData.games || allGamesData);
@@ -212,44 +205,22 @@ const GamePlayer = () => {
                             ))}
                         </div>
                     ) : (
-                        <div className="games-grid">
-                            {allGames
-                                .filter(g => g._id !== id)
-                                .slice(0, 22)
-                                .map((g, index) => (
-                                    <div
-                                        key={g._id}
-                                        className="game-wrapper"
-                                        style={{ animationDelay: `${index * 0.05}s` }}
-                                    >
-                                        <div className="game-card" onClick={() => handleCardClick(g)} style={{ cursor: 'pointer' }}>
-                                            <div className="game-logo-wrapper">
-                                                <img
-                                                    src={getLogoSrc(g._id, 185)}
-                                                    srcSet={getLogoSrcSet(g._id)}
-                                                    sizes={LOGO_SIZES}
-                                                    alt={g.gameName}
-                                                    className="game-logo"
-                                                    width="185"
-                                                    height="185"
-                                                    loading={index < 4 ? "eager" : "lazy"}
-                                                    fetchpriority={index < 4 ? "high" : "auto"}
-                                                    decoding="async"
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="game-overlay">
-                                                <div className="game-info">
-                                                    <p className="game-card-title text-white fw-bold m-0">{g.gameName}</p>
-                                                </div>
-                                            </div>
-                                        </div>
+                        <Suspense fallback={
+                            <div className="games-grid">
+                                {[...Array(6)].map((_, i) => (
+                                    <div key={i} className="skeleton-card">
+                                        <div className="skeleton-img"></div>
                                     </div>
                                 ))}
-                        </div>
+                            </div>
+                        }>
+                            <MoreGamesGrid
+                                games={allGames}
+                                onCardClick={handleCardClick}
+                                currentId={id}
+                                API_URL={API_URL}
+                            />
+                        </Suspense>
                     )}
                 </div>
             </div>
