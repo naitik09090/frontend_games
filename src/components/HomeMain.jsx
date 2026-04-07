@@ -60,10 +60,15 @@ const HomeMain = () => {
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=20`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=60`;
     };
 
-    const LOGO_WIDTH = 200;
+    const getLogoSrcSet = (game) => {
+        if (game.gameLogo) return undefined;
+        return `${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w`;
+    };
+
+    const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
 
     const fetchGames = async (pageNum) => {
         if (loadingRef.current && pageNum === 1) return;
@@ -219,7 +224,9 @@ const HomeMain = () => {
                                 <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
                                     <div className="game-logo-wrapper">
                                         <img
-                                            src={getLogoSrc(game, LOGO_WIDTH)}
+                                            src={getLogoSrc(game, 185)}
+                                            srcSet={getLogoSrcSet(game)}
+                                            sizes={LOGO_SIZES}
                                             alt={game.gameName}
                                             className="game-logo"
                                             width="185"

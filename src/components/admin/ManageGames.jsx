@@ -216,9 +216,9 @@ const ManageGames = () => {
             if (game.gameLogo.startsWith('http')) return game.gameLogo;
 
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
-            return `${REMOTE_URL}${path}?q=20&t=${timestamp}`;
+            return `${REMOTE_URL}${path}?q=75&t=${timestamp}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?q=20&t=${timestamp}`;
+        return `${REMOTE_URL}/games/${game._id}/logo?q=75&t=${timestamp}`;
     };
 
     const fallbackSvg = (size = 50) =>
