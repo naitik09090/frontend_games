@@ -43,7 +43,7 @@ const GamePlayer = () => {
                 // 2. Fetch related games from API
                 let related = [];
                 try {
-                    const response = await fetch(`${API_URL}/games?limit=500`);
+                    const response = await fetch(`${API_URL}/games?limit=50`);
                     if (response.ok) {
                         const data = await response.json();
                         let fetchedGames = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
@@ -204,9 +204,9 @@ const GamePlayer = () => {
                     </div>
 
                     {!bottomReady ? (
-                        <div className="games-grid">
-                            <div className="d-flex justify-content-center p-5">
-                                <div className="spinner-border text-info d-flex align-items-center justify-content-center" role="status"></div>
+                        <div className="d-flex justify-content-center align-items-center p-5" style={{ minHeight: '200px' }}>
+                            <div className="spinner-border text-info" role="status">
+                                <span className="visually-hidden">Loading...</span>
                             </div>
                         </div>
                     ) : (
