@@ -1,9 +1,7 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import MoreGamesGrid from './MoreGamesGrid.jsx';
 import './GamePlayer.css';
-
-// Lazy load the 'More Adventures' grid to reduce initial JS payload for the main game player.
-const MoreGamesGrid = lazy(() => import('./MoreGamesGrid.jsx'));
 
 const GamePlayer = () => {
     const { id } = useParams();
@@ -206,31 +204,17 @@ const GamePlayer = () => {
                     </div>
 
                     {!bottomReady ? (
-                        /* Neon gaming skeleton */
                         <div className="games-grid">
-                            {[...Array(12)].map((_, i) => (
-                                <div key={i} className="skeleton-card">
-                                    <div className="skeleton-img"></div>
-                                </div>
-                            ))}
+                            <div className="d-flex justify-content-center p-5">
+                                <div className="spinner-border text-info d-flex align-items-center justify-content-center" role="status"></div>
+                            </div>
                         </div>
                     ) : (
-                        <Suspense fallback={
-                            <div className="games-grid">
-                                {[...Array(6)].map((_, i) => (
-                                    <div key={i} className="skeleton-card">
-                                        <div className="skeleton-img"></div>
-                                    </div>
-                                ))}
-                            </div>
-                        }>
-                            <MoreGamesGrid
-                                games={allGames}
-                                onCardClick={handleCardClick}
-                                currentId={id}
-                                REMOTE_URL={REMOTE_URL}
-                            />
-                        </Suspense>
+                        <MoreGamesGrid
+                            games={allGames}
+                            onCardClick={handleCardClick}
+                            currentId={id}
+                        />
                     )}
                 </div>
             </div>
