@@ -17,13 +17,10 @@ const MoreGamesGrid = ({ games, onCardClick, currentId }) => {
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=30`;
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=20`;
     };
 
-    const getLogoSrcSet = (g) => {
-        if (g.gameLogo) return undefined; // browser can scale local/base64 images
-        return `${getLogoSrc(g, 150)} 150w, ${getLogoSrc(g, 200)} 200w, ${getLogoSrc(g, 250)} 250w`;
-    };
+    const LOGO_WIDTH = 200;
 
     return (
         <div className="games-grid">
@@ -39,9 +36,7 @@ const MoreGamesGrid = ({ games, onCardClick, currentId }) => {
                         <div className="game-card" onClick={() => onCardClick(g)} style={{ cursor: 'pointer' }}>
                             <div className="game-logo-wrapper">
                                 <img
-                                    src={getLogoSrc(g, 150)}
-                                    srcSet={getLogoSrcSet(g)}
-                                    sizes={LOGO_SIZES}
+                                    src={getLogoSrc(g, LOGO_WIDTH)}
                                     alt={g.gameName}
                                     className="game-logo"
                                     width="185"
