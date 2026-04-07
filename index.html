@@ -12,12 +12,26 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;600;800&display=swap"
     rel="stylesheet" media="print" onload="this.media='all'" />
   <title>Games Hub – Play Free Online Games</title>
-  <meta name="description"
-    content="Play a collection of free online games including puzzle, sorting, and adventure games. Fun for all ages!" />
-  <meta name="theme-color" content="#0f0c29" />
-  <meta name="robots" content="index, follow" />
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
   <link rel="apple-touch-icon" href="/vite.svg" />
+  <style>
+    :root {
+      --p: #00d2ff;
+      --bg: #0f0c29
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Outfit', 'Inter', sans-serif;
+      margin: 0
+    }
+
+    .game-player-gaming-wrapper {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0f0c29 0%, #302b63 100%)
+    }
+  </style>
 
   <!-- Preload Bootstrap Icons Font to strictly prevent Navbar Layout Shift on initial load -->
   <link rel="preload" href="/bootstrap-icons.woff2" as="font" type="font/woff2" crossorigin />
