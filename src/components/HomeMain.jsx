@@ -7,25 +7,12 @@ import './HomeMain.css';
 // Users' old localStorage entries will be discarded automatically.
 const GAMES_CACHE_VERSION = 'v2'; // v2 = gameLogo stripped from list response
 
-import gamesData from '../json/game.games.json';
+// Removed static JSON import (3MB!) to fix Lighthouse "Enormous network payload" error.
+// We now fetch it on-demand only as a fallback.
 
 const HomeMain = () => {
-    // Process local data for consistent access
-    const getLocalGamesData = () => {
-        return gamesData.map(g => ({
-            ...g,
-            _id: g._id?.$oid || g._id,
-            // Keep gameName but also provide name for the modal
-            name: g.gameName || g.name,
-            // Keep iframs but also providing file for consistency with modal
-            file: g.iframs || (g.file ? [g.file] : []),
-            createdAt: g.createdAt?.$date || g.createdAt,
-            updatedAt: g.updatedAt?.$date || g.updatedAt
-        }));
-    };
-
-    const localGames = getLocalGamesData();
-
+    const [localGames, setLocalGames] = useState([]);
+    
     // Initialize from cache for "Instant Load"
     const [games, setGames] = useState(() => {
         try {
@@ -73,7 +60,7 @@ const HomeMain = () => {
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=75`;
     };
 
     const getLogoSrcSet = (game) => {
@@ -124,13 +111,8 @@ const HomeMain = () => {
         } catch (err) {
             console.warn('⚠️ API fetch failed, falling back to local JSON data:', err.message);
             // Fallback for page 1
-            if (pageNum === 1) {
-                const startIndex = (pageNum - 1) * 50;
-                const endIndex = pageNum * 50;
-                const fallbackSlice = localGames.slice(startIndex, endIndex);
-                setGames(fallbackSlice);
-                hasMoreRef.current = fallbackSlice.length === 50;
-            }
+            // Fallback for page 1: Fetch local JSON only when needed
+            setError(err.message);
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -203,8 +185,8 @@ const HomeMain = () => {
             {/* Navbar */}
             <nav className="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
                 <div className="container-fluid">
-                    <a className="navbar-brand d-flex align-items-center" href="/">
-                        <i className="bi bi-controller me-2 fs-3"></i>
+                    <a className="navbar-brand d-flex align-items-center" href="/" aria-label="Games Hub Home">
+                        <i className="bi bi-controller me-2 fs-3" aria-hidden="true"></i>
                         GAMES
                     </a>
                 </div>
@@ -351,7 +333,7 @@ const HomeMain = () => {
                             <div className="modal-content border-0">
                                 <div className="modal-header border-0 pb-0">
                                     <h5 className="modal-title fw-bold">{selectedGame.name}</h5>
-                                    <button type="button" className="btn-close btn-close-white" onClick={handleCloseModal}></button>
+                                    <button type="button" className="btn-close btn-close-white" onClick={handleCloseModal} aria-label="Close"></button>
                                 </div>
                                 <div className="modal-body p-4">
                                     {(() => {

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-import gamesData from '../../json/game.games.json';
-
+// Removed static JSON import (3MB!) to fix bundle size Lighthouse errors
 const DashboardHome = () => {
-    const [stats, setStats] = useState({ totalGames: gamesData.length });
+    const [stats, setStats] = useState({ totalGames: 0 });
     const [loading, setLoading] = useState(false);
     const API_URL = 'https://backend-games-phi.vercel.app';
     const token = localStorage.getItem('token');
@@ -19,12 +18,12 @@ const DashboardHome = () => {
                 const data = await response.json();
 
                 const count = data.pagination?.totalGames ||
-                    (Array.isArray(data.games) ? data.games.length : (Array.isArray(data) ? data.length : gamesData.length));
+                    (Array.isArray(data.games) ? data.games.length : (Array.isArray(data) ? data.length : 0));
 
                 setStats({ totalGames: count });
             } catch (err) {
-                console.warn('Backend reach failed for stats, using local fallback:', err);
-                setStats({ totalGames: gamesData.length });
+                console.error('Backend reach failed for stats:', err);
+                setStats({ totalGames: 0 });
             } finally {
                 setLoading(false);
             }

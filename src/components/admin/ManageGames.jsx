@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import gamesData from '../../json/game.games.json';
-
+// Decoupled 3MB JSON import to fix bundle payload Lighthouse error.
 const ManageGames = () => {
     const navigate = useNavigate();
     const token = localStorage.getItem('token');
 
     // Process local data for consistent access
-    const getLocalGamesData = () => {
-        return gamesData.map(g => ({
+    const processLocalData = (data) => {
+        return data.map(g => ({
             ...g,
             _id: g._id?.$oid || g._id,
             createdAt: g.createdAt?.$date || g.createdAt,
@@ -16,9 +15,7 @@ const ManageGames = () => {
         }));
     };
 
-    const localGames = getLocalGamesData();
-
-    const [games, setGames] = useState(localGames);
+    const [games, setGames] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [editingGame, setEditingGame] = useState(null);
@@ -46,16 +43,23 @@ const ManageGames = () => {
                 });
                 if (!response.ok) throw new Error('API fetch failed');
                 const data = await response.json();
-                const gamesDataSlice = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : localGames);
+                let gamesDataSlice = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
 
                 // Sort by createdAt descending
                 gamesDataSlice.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
                 setGames(gamesDataSlice);
             } catch (err) {
-                console.warn('Backend API unreachable, using local JSON fallback:', err);
-                setGames(localGames);
-                setError('Currently showing local backup data. Changes might not sync live.');
+                console.warn('Backend API unreachable, attempting local JSON fallback fetch:', err);
+                try {
+                    const localRes = await fetch('/data/game.games.json');
+                    const rawLocal = await localRes.json();
+                    const localProcessed = processLocalData(rawLocal);
+                    setGames(localProcessed);
+                    setError('Currently showing local backup data. Changes might not sync live.');
+                } catch (fallbackError) {
+                    setError('Critical: Could not reach backend or local fallback.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -129,7 +133,7 @@ const ManageGames = () => {
             await fetchGames();
             resetForm();
             alert(`Game ${editingGame ? 'updated' : 'added'} successfully!`);
-            
+
             // Notify other tabs to refresh
             try {
                 const syncChannel = new BroadcastChannel('gaming_sync');
@@ -212,9 +216,9 @@ const ManageGames = () => {
             if (game.gameLogo.startsWith('http')) return game.gameLogo;
 
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
-            return `${REMOTE_URL}${path}?t=${timestamp}`;
+            return `${REMOTE_URL}${path}?q=75&t=${timestamp}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?t=${timestamp}`;
+        return `${REMOTE_URL}/games/${game._id}/logo?q=75&t=${timestamp}`;
     };
 
     const fallbackSvg = (size = 50) =>

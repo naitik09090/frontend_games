@@ -5,23 +5,7 @@ import './GamePlayer.css';
 // Lazy load the 'More Adventures' grid to reduce initial JS payload for the main game player.
 const MoreGamesGrid = lazy(() => import('./MoreGamesGrid.jsx'));
 
-import gamesData from '../../json/game.games.json';
-
 const GamePlayer = () => {
-    // Process local data for consistent access
-    const getLocalGamesData = () => {
-        return gamesData.map(g => ({
-            ...g,
-            _id: g._id?.$oid || g._id,
-            name: g.gameName || g.name,
-            file: g.iframs || (g.file ? [g.file] : []),
-            createdAt: g.createdAt?.$date || g.createdAt,
-            updatedAt: g.updatedAt?.$date || g.updatedAt
-        }));
-    };
-
-    const localGames = getLocalGamesData();
-
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -29,8 +13,7 @@ const GamePlayer = () => {
     // Initialize game from navigation state if available (Instant Load)
     const [game, setGame] = useState(() => {
         if (location.state?.gameData) return location.state.gameData;
-        // Search in local data if not in state
-        return localGames.find(g => g._id === id) || null;
+        return null;
     });
     const [allGames, setAllGames] = useState([]);
     const [loading, setLoading] = useState(!game);
@@ -38,9 +21,7 @@ const GamePlayer = () => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [bottomReady, setBottomReady] = useState(false);
     const REMOTE_URL = 'https://backend-games-phi.vercel.app';
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000'
-        : REMOTE_URL;
+    const API_URL = REMOTE_URL;
 
     useEffect(() => {
         if (!id) return;
@@ -55,19 +36,9 @@ const GamePlayer = () => {
                 let currentGame = game && game._id === id ? game : null;
 
                 if (!currentGame) {
-                    try {
-                        const response = await fetch(`${API_URL}/games/${id}`);
-                        if (response.ok) {
-                            currentGame = await response.json();
-                            setGame(currentGame);
-                        }
-                    } catch (e) { console.warn("API game fetch failed, using local fallback"); }
-                }
-
-                // If still not found, use local fallback
-                if (!currentGame) {
-                    currentGame = localGames.find(g => g._id === id);
-                    if (!currentGame) throw new Error('Game not found');
+                    const response = await fetch(`${API_URL}/games/${id}`);
+                    if (!response.ok) throw new Error('Game not found');
+                    currentGame = await response.json();
                     setGame(currentGame);
                 }
 
@@ -87,11 +58,6 @@ const GamePlayer = () => {
                         related = newestGames;
                     }
                 } catch (e) { console.warn("API related games fetch failed"); }
-
-                // Fallback to local if API returned empty or failed
-                if (related.length === 0) {
-                    related = localGames.filter(g => g._id !== id);
-                }
 
                 // Shuffled subset
                 const shuffled = [...related].sort(() => 0.5 - Math.random());
