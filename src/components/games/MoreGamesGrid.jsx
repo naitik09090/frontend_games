@@ -15,9 +15,9 @@ const MoreGamesGrid = ({ games, onCardClick, currentId }) => {
             if (g.gameLogo.startsWith('http')) return g.gameLogo;
 
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
-            return `${REMOTE_URL}${path}?q=30`;
+            return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=30`;
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=75`;
     };
 
     const getLogoSrcSet = (g) => {

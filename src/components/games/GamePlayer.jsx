@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import MoreGamesGrid from './MoreGamesGrid.jsx';
 import './GamePlayer.css';
+
+// Lazy load the 'More Adventures' grid to reduce initial JS payload for the main game player.
+const MoreGamesGrid = lazy(() => import('./MoreGamesGrid.jsx'));
 
 const GamePlayer = () => {
     const { id } = useParams();
@@ -30,25 +32,36 @@ const GamePlayer = () => {
             setError(null);
 
             try {
-                // Parallelize fetches to cut total wait time in half
-                const [gameRes, relatedRes] = await Promise.all([
-                    (game && game._id === id) ? Promise.resolve(null) : fetch(`${API_URL}/games/${id}`),
-                    fetch(`${API_URL}/games?limit=12`)
-                ]);
-
+                // 1. Fetch current game details from API if not already in state
                 let currentGame = game && game._id === id ? game : null;
-                if (gameRes && gameRes.ok) {
-                    currentGame = await gameRes.json();
+
+                if (!currentGame) {
+                    const response = await fetch(`${API_URL}/games/${id}`);
+                    if (!response.ok) throw new Error('Game not found');
+                    currentGame = await response.json();
                     setGame(currentGame);
-                } else if (gameRes && !gameRes.ok) {
-                    throw new Error('Game not found');
                 }
 
-                if (relatedRes.ok) {
-                    const data = await relatedRes.json();
-                    let fetchedGames = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
-                    setAllGames(fetchedGames.filter(g => g._id !== id && g.status !== false));
-                }
+                // 2. Fetch related games from API
+                let related = [];
+                try {
+                    const response = await fetch(`${API_URL}/games?limit=500`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        let fetchedGames = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
+
+                        // Sort by createdAt descending to ensure newest games are prioritized
+                        fetchedGames.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                        // Take the newest 50 games for the related pool
+                        const newestGames = fetchedGames.filter(g => g._id !== id && g.status !== false).slice(0, 50);
+                        related = newestGames;
+                    }
+                } catch (e) { console.warn("API related games fetch failed"); }
+
+                // Shuffled subset
+                const shuffled = [...related].sort(() => 0.5 - Math.random());
+                setAllGames(shuffled.slice(0, 24));
 
                 setBottomReady(true);
                 setLoading(false);
@@ -193,17 +206,31 @@ const GamePlayer = () => {
                     </div>
 
                     {!bottomReady ? (
-                        <div className="d-flex justify-content-center align-items-center p-5" style={{ minHeight: '200px' }}>
-                            <div className="spinner-border text-info" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
+                        /* Neon gaming skeleton */
+                        <div className="games-grid">
+                            {[...Array(12)].map((_, i) => (
+                                <div key={i} className="skeleton-card">
+                                    <div className="skeleton-img"></div>
+                                </div>
+                            ))}
                         </div>
                     ) : (
-                        <MoreGamesGrid
-                            games={allGames}
-                            onCardClick={handleCardClick}
-                            currentId={id}
-                        />
+                        <Suspense fallback={
+                            <div className="games-grid">
+                                {[...Array(6)].map((_, i) => (
+                                    <div key={i} className="skeleton-card">
+                                        <div className="skeleton-img"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        }>
+                            <MoreGamesGrid
+                                games={allGames}
+                                onCardClick={handleCardClick}
+                                currentId={id}
+                                REMOTE_URL={REMOTE_URL}
+                            />
+                        </Suspense>
                     )}
                 </div>
             </div>
