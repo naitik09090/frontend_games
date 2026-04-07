@@ -7,8 +7,26 @@ import './HomeMain.css';
 // Users' old localStorage entries will be discarded automatically.
 const GAMES_CACHE_VERSION = 'v2'; // v2 = gameLogo stripped from list response
 
+import gamesData from '../json/game.games.json';
+
 const HomeMain = () => {
-    // Initialize from cache for "Instant Load" — discard if it belongs to an old version
+    // Process local data for consistent access
+    const getLocalGamesData = () => {
+        return gamesData.map(g => ({
+            ...g,
+            _id: g._id?.$oid || g._id,
+            // Keep gameName but also provide name for the modal
+            name: g.gameName || g.name,
+            // Keep iframs but also providing file for consistency with modal
+            file: g.iframs || (g.file ? [g.file] : []),
+            createdAt: g.createdAt?.$date || g.createdAt,
+            updatedAt: g.updatedAt?.$date || g.updatedAt
+        }));
+    };
+
+    const localGames = getLocalGamesData();
+
+    // Initialize from cache for "Instant Load"
     const [games, setGames] = useState(() => {
         try {
             if (localStorage.getItem('gamesCacheVersion') !== GAMES_CACHE_VERSION) {
@@ -19,13 +37,7 @@ const HomeMain = () => {
             return cached ? JSON.parse(cached) : [];
         } catch (e) { return []; }
     });
-    const [loading, setLoading] = useState(() => {
-        // Only show initial loading if we have NO cached games
-        try {
-            if (localStorage.getItem('gamesCacheVersion') !== GAMES_CACHE_VERSION) return true;
-            return !localStorage.getItem('gamesCache');
-        } catch (e) { return true; }
-    });
+    const [loading, setLoading] = useState(false); // No initial loading for local data
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState(null);
     const [selectedGame, setSelectedGame] = useState(null);
@@ -48,28 +60,28 @@ const HomeMain = () => {
         }
     };
 
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000'
-        : 'https://backend-games-phi.vercel.app';
+    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
+    const API_URL = REMOTE_URL;
 
-    // Returns a URL to serve the game's logo through the /games/:id/logo endpoint.
-    const getLogoSrc = (gameId, size = 185) => {
-        return `${API_URL}/games/${gameId}/logo?w=${size}`;
+    // Returns a URL to serve the game's logo, preferring the JSON path if available.
+    const getLogoSrc = (game, size = 185) => {
+        if (!game) return '';
+        if (game.gameLogo) {
+            if (game.gameLogo.startsWith('data:')) return game.gameLogo;
+            if (game.gameLogo.startsWith('http')) return game.gameLogo;
+
+            const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
+            return `${REMOTE_URL}${path}`;
+        }
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}`;
     };
 
-    // To completely satisfy Lighthouse "Properly size images":
-    // Moto G Power (DPR 1.75) needs ~323px for a 185px slot.
-    // Desktop (1x) needs ~240px. 
-    // Mobile (1x) needs ~185px.
-    // By NOT providing sizes > 330w, we force the browser to pick 330w maximum for high-DPR screens,
-    // which is so close to the expected 323px that Lighthouse calculates 0KB waste!
-    const getLogoSrcSet = (gameId) => {
-        return `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 330)} 330w`;
+    const getLogoSrcSet = (game) => {
+        if (game.gameLogo) return undefined;
+        return `${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w`;
     };
 
-    // Tells the browser the exact layout size so it picks the perfect w-descriptor BEFORE downloading
     const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
-
 
     const fetchGames = async (pageNum) => {
         if (loadingRef.current && pageNum === 1) return;
@@ -80,24 +92,28 @@ const HomeMain = () => {
         try {
             const limit = 50;
             const response = await fetch(`${API_URL}/games?page=${pageNum}&limit=${limit}`);
-            if (!response.ok) throw new Error('Failed to fetch games');
-            const data = await response.json();
 
-            // Handle both response formats: {total, games} or just games array
-            const gamesData = data.games || data;
+            let gamesDataSlice = [];
+            if (response.ok) {
+                const data = await response.json();
+                gamesDataSlice = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
 
-            // console.log(`✅ Fetched ${gamesData.length} games (Page ${pageNum})`);
+                // Sort by createdAt descending
+                gamesDataSlice.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            if (gamesData.length < limit) {
-                hasMoreRef.current = false;
+                if (data.pagination) {
+                    hasMoreRef.current = data.pagination.hasMore;
+                } else {
+                    hasMoreRef.current = gamesDataSlice.length === limit;
+                }
             } else {
-                hasMoreRef.current = true;
+                throw new Error('API request failed');
             }
 
             setGames(prev => {
-                const newGames = pageNum === 1 ? gamesData : [...prev, ...gamesData];
-                // Update cache on page 1 fetch (no gameLogo in payload now — safe to cache)
-                if (pageNum === 1) {
+                const newGames = pageNum === 1 ? gamesDataSlice : [...prev, ...gamesDataSlice];
+                // Update local storage cache
+                if (pageNum === 1 && newGames.length > 0) {
                     try {
                         localStorage.setItem('gamesCache', JSON.stringify(newGames));
                         localStorage.setItem('gamesCacheVersion', GAMES_CACHE_VERSION);
@@ -106,8 +122,15 @@ const HomeMain = () => {
                 return newGames;
             });
         } catch (err) {
-            console.error('❌ Error fetching games:', err.message);
-            setError(err.message);
+            console.warn('⚠️ API fetch failed, falling back to local JSON data:', err.message);
+            // Fallback for page 1
+            if (pageNum === 1) {
+                const startIndex = (pageNum - 1) * 50;
+                const endIndex = pageNum * 50;
+                const fallbackSlice = localGames.slice(startIndex, endIndex);
+                setGames(fallbackSlice);
+                hasMoreRef.current = fallbackSlice.length === 50;
+            }
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -135,7 +158,30 @@ const HomeMain = () => {
         };
 
         window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+
+        // Tab Sync & Auto-Refresh - Automatically updates the home page when a new game is added
+        const syncChannel = new (window.BroadcastChannel || class { postMessage() { }; onmessage() { }; close() { } })('gaming_sync');
+        syncChannel.onmessage = (event) => {
+            if (event.data?.type === 'REFRESH_DATA') {
+                pageRef.current = 1;
+                hasMoreRef.current = true;
+                fetchGames(1);
+            }
+        };
+
+        const handleFocus = () => {
+            // Silently refresh on focus to show new games
+            pageRef.current = 1;
+            hasMoreRef.current = true;
+            fetchGames(1);
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('focus', handleFocus);
+            if (syncChannel.close) syncChannel.close();
+        };
     }, []);
 
     const handleCardClick = (game) => {
@@ -196,8 +242,8 @@ const HomeMain = () => {
                                 <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
                                     <div className="game-logo-wrapper">
                                         <img
-                                            src={getLogoSrc(game._id, 185)}
-                                            srcSet={getLogoSrcSet(game._id)}
+                                            src={getLogoSrc(game, 185)}
+                                            srcSet={getLogoSrcSet(game)}
                                             sizes={LOGO_SIZES}
                                             alt={game.gameName}
                                             className="game-logo"
@@ -207,8 +253,15 @@ const HomeMain = () => {
                                             fetchPriority={index < 4 ? "high" : "auto"}
                                             decoding="async"
                                             onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+                                                if (e.target.src.includes('localhost:5000')) {
+                                                    e.target.src = e.target.src.replace('http://localhost:5000', REMOTE_URL);
+                                                    if (e.target.srcset) {
+                                                        e.target.srcset = e.target.srcset.replaceAll('http://localhost:5000', REMOTE_URL);
+                                                    }
+                                                } else {
+                                                    e.target.onerror = null;
+                                                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+                                                }
                                             }}
                                         />
                                     </div>

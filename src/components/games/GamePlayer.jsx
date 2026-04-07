@@ -5,70 +5,127 @@ import './GamePlayer.css';
 // Lazy load the 'More Adventures' grid to reduce initial JS payload for the main game player.
 const MoreGamesGrid = lazy(() => import('./MoreGamesGrid.jsx'));
 
+import gamesData from '../../json/game.games.json';
+
 const GamePlayer = () => {
+    // Process local data for consistent access
+    const getLocalGamesData = () => {
+        return gamesData.map(g => ({
+            ...g,
+            _id: g._id?.$oid || g._id,
+            name: g.gameName || g.name,
+            file: g.iframs || (g.file ? [g.file] : []),
+            createdAt: g.createdAt?.$date || g.createdAt,
+            updatedAt: g.updatedAt?.$date || g.updatedAt
+        }));
+    };
+
+    const localGames = getLocalGamesData();
+
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+
     // Initialize game from navigation state if available (Instant Load)
-    const [game, setGame] = useState(location.state?.gameData || null);
+    const [game, setGame] = useState(() => {
+        if (location.state?.gameData) return location.state.gameData;
+        // Search in local data if not in state
+        return localGames.find(g => g._id === id) || null;
+    });
     const [allGames, setAllGames] = useState([]);
-    // If we have game data, we are not loading
-    const [loading, setLoading] = useState(!location.state?.gameData);
+    const [loading, setLoading] = useState(!game);
     const [error, setError] = useState(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [bottomReady, setBottomReady] = useState(false);
+    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:5000'
-        : 'https://backend-games-phi.vercel.app';
-
-
-
-    // For the currently-playing game's logo, the full game object is fetched via /games/:id
-    // which still includes gameLogo. We keep the old helper for that case.
-    const getOptimizedImageSrc = (gameLogo, size = 185) => {
-        if (!gameLogo) return null;
-        if (gameLogo.startsWith('data:')) return gameLogo; // already base64 WebP stored in full game
-        const absoluteUrl = gameLogo.startsWith('http')
-            ? gameLogo
-            : `${API_URL}${gameLogo.startsWith('/') ? '' : '/images/'}${gameLogo}`;
-        return `${API_URL}/image-proxy?url=${encodeURIComponent(absoluteUrl)}&w=${size}`;
-    };
+        : REMOTE_URL;
 
     useEffect(() => {
-        const fetchData = async () => {
+        if (!id) return;
+
+        const loadGameAndRelated = async () => {
+            setLoading(true);
+            setBottomReady(false);
+            setError(null);
+
             try {
-                // Fetch specific game data only if we don't have it or need fresh info
-                if (!game) {
-                    const gameRes = await fetch(`${API_URL}/games/${id}`);
-                    if (!gameRes.ok) throw new Error('Game not found');
-                    const gameData = await gameRes.json();
-                    setGame(gameData);
+                // 1. Fetch current game details from API if not already in state
+                let currentGame = game && game._id === id ? game : null;
+
+                if (!currentGame) {
+                    try {
+                        const response = await fetch(`${API_URL}/games/${id}`);
+                        if (response.ok) {
+                            currentGame = await response.json();
+                            setGame(currentGame);
+                        }
+                    } catch (e) { console.warn("API game fetch failed, using local fallback"); }
                 }
 
-                // Only fetch enough games for the "More Adventures" grid (e.g. 24)
-                // This reduces the JSON payload size significantly.
-                const allGamesRes = await fetch(`${API_URL}/games?limit=24`);
-                if (allGamesRes.ok) {
-                    const allGamesData = await allGamesRes.json();
-                    setAllGames(allGamesData.games || allGamesData);
-                    setBottomReady(true);
+                // If still not found, use local fallback
+                if (!currentGame) {
+                    currentGame = localGames.find(g => g._id === id);
+                    if (!currentGame) throw new Error('Game not found');
+                    setGame(currentGame);
                 }
 
+                // 2. Fetch related games from API
+                let related = [];
+                try {
+                    const response = await fetch(`${API_URL}/games?limit=500`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        let fetchedGames = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
+
+                        // Sort by createdAt descending to ensure newest games are prioritized
+                        fetchedGames.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                        // Take the newest 50 games for the related pool
+                        const newestGames = fetchedGames.filter(g => g._id !== id && g.status !== false).slice(0, 50);
+                        related = newestGames;
+                    }
+                } catch (e) { console.warn("API related games fetch failed"); }
+
+                // Fallback to local if API returned empty or failed
+                if (related.length === 0) {
+                    related = localGames.filter(g => g._id !== id);
+                }
+
+                // Shuffled subset
+                const shuffled = [...related].sort(() => 0.5 - Math.random());
+                setAllGames(shuffled.slice(0, 24));
+
+                setBottomReady(true);
                 setLoading(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (err) {
-                console.error("Error fetching data:", err);
+                console.error("Error loading game player data:", err);
                 setError(err.message);
                 setLoading(false);
             }
         };
 
-        if (id) {
-            if (!game) setLoading(true);
-            setBottomReady(false); // Reset on game switch
+        loadGameAndRelated();
 
-            fetchData();
-            window.scrollTo(0, 0);
-        }
+        // Tab Sync & Auto-Refresh - updates related games when a new game is added in another tab
+        const syncChannel = new (window.BroadcastChannel || class { postMessage() { }; onmessage() { }; close() { } })('gaming_sync');
+        syncChannel.onmessage = (event) => {
+            if (event.data?.type === 'REFRESH_DATA') {
+                loadGameAndRelated();
+            }
+        };
+
+        const handleFocus = () => {
+            loadGameAndRelated();
+        };
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            if (syncChannel.close) syncChannel.close();
+        };
     }, [id]);
 
     const handleCardClick = (clickedGame) => {
@@ -218,7 +275,7 @@ const GamePlayer = () => {
                                 games={allGames}
                                 onCardClick={handleCardClick}
                                 currentId={id}
-                                API_URL={API_URL}
+                                REMOTE_URL={REMOTE_URL}
                             />
                         </Suspense>
                     )}

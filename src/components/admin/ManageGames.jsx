@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import gamesData from '../../json/game.games.json';
 
 const ManageGames = () => {
-    const [games, setGames] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
+    const token = localStorage.getItem('token');
+
+    // Process local data for consistent access
+    const getLocalGamesData = () => {
+        return gamesData.map(g => ({
+            ...g,
+            _id: g._id?.$oid || g._id,
+            createdAt: g.createdAt?.$date || g.createdAt,
+            updatedAt: g.updatedAt?.$date || g.updatedAt
+        }));
+    };
+
+    const localGames = getLocalGamesData();
+
+    const [games, setGames] = useState(localGames);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [editingGame, setEditingGame] = useState(null);
     const [formData, setFormData] = useState({
@@ -17,12 +34,34 @@ const ManageGames = () => {
     const [itemsPerPage] = useState(10);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000'
-        : 'https://backend-games-phi.vercel.app';
+    const API_URL = 'https://backend-games-phi.vercel.app';
+    const REMOTE_URL = API_URL;
 
     useEffect(() => {
-        fetchGames();
+        const loadInitialGames = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`${API_URL}/games?limit=1000`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('API fetch failed');
+                const data = await response.json();
+                const gamesDataSlice = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : localGames);
+
+                // Sort by createdAt descending
+                gamesDataSlice.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                setGames(gamesDataSlice);
+            } catch (err) {
+                console.warn('Backend API unreachable, using local JSON fallback:', err);
+                setGames(localGames);
+                setError('Currently showing local backup data. Changes might not sync live.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadInitialGames();
 
         const closeDropdowns = () => setOpenDropdownId(null);
         window.addEventListener('click', closeDropdowns);
@@ -31,14 +70,15 @@ const ManageGames = () => {
 
     const fetchGames = async () => {
         try {
-            const response = await fetch(`${API_URL}/games?page=1&limit=999999`);
-            if (!response.ok) throw new Error('Failed to fetch games');
+            const response = await fetch(`${API_URL}/games?limit=1000`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Refresh failed');
             const data = await response.json();
             setGames(data.games || data);
-            setLoading(false);
         } catch (err) {
-            setError(err.message);
-            setLoading(false);
+            console.error('Failed to refresh from backend:', err);
+            // Don't alert if we already have local data showing
         }
     };
 
@@ -75,7 +115,11 @@ const ManageGames = () => {
             const url = editingGame ? `${API_URL}/games/${editingGame._id}` : `${API_URL}/games`;
             const method = editingGame ? 'PUT' : 'POST';
 
-            const response = await fetch(url, { method, body: fd });
+            const response = await fetch(url, {
+                method,
+                body: fd,
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: response.statusText }));
@@ -85,6 +129,13 @@ const ManageGames = () => {
             await fetchGames();
             resetForm();
             alert(`Game ${editingGame ? 'updated' : 'added'} successfully!`);
+            
+            // Notify other tabs to refresh
+            try {
+                const syncChannel = new BroadcastChannel('gaming_sync');
+                syncChannel.postMessage({ type: 'REFRESH_DATA', method: editingGame ? 'PUT' : 'POST' });
+                syncChannel.close();
+            } catch (e) { }
         } catch (err) {
             console.error(err);
             alert(`Error: ${err.message}`);
@@ -96,7 +147,10 @@ const ManageGames = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this game?')) return;
         try {
-            const response = await fetch(`${API_URL}/games/${id}`, { method: 'DELETE' });
+            const response = await fetch(`${API_URL}/games/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (!response.ok) throw new Error('Failed to delete game');
             setGames(prev => prev.filter(g => g._id !== id));
             alert('Game deleted successfully');
@@ -109,10 +163,11 @@ const ManageGames = () => {
         setEditingGame(game);
         setFormData({
             gameName: game.gameName || '',
-            gameLogo: null,
+            gameLogoFile: null,
+            gameLogoPreview: getLogoSrc(game),
             iframs: (Array.isArray(game.iframs) ? game.iframs.join(', ') : game.iframs) || ''
         });
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const resetForm = () => {
@@ -123,7 +178,10 @@ const ManageGames = () => {
 
     const handleToggleStatus = async (id) => {
         try {
-            const response = await fetch(`${API_URL}/games/${id}/toggle-status`, { method: 'PATCH' });
+            const response = await fetch(`${API_URL}/games/${id}/toggle-status`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (!response.ok) throw new Error('Failed to toggle status');
             const data = await response.json();
             setGames(prev => prev.map(g => g._id === id ? { ...g, status: data.status } : g));
@@ -132,17 +190,31 @@ const ManageGames = () => {
         }
     };
 
-    // Pagination
+    // Pagination safety with descending sort (newest first)
+    const sortedGames = [...(Array.isArray(games) ? games : (games?.games || []))]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const gamesList = sortedGames;
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = games.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(games.length / itemsPerPage);
+    const currentItems = gamesList.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(gamesList.length / itemsPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-    // gameLogo is no longer returned from the list endpoint (stripped to reduce payload).
-    // Use the /games/:id/logo endpoint to fetch thumbnails on demand.
+    const [viewingJson, setViewingJson] = useState(null);
+
+    // gameLogo can be a direct path in JSON or fetched through backend.
     const getLogoSrc = (game) => {
-        return `${API_URL}/games/${game._id}/logo?w=50`;
+        if (!game) return '';
+        const timestamp = Date.now();
+        if (game.gameLogo) {
+            if (game.gameLogo.startsWith('data:')) return game.gameLogo;
+            if (game.gameLogo.startsWith('http')) return game.gameLogo;
+
+            const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
+            return `${REMOTE_URL}${path}?t=${timestamp}`;
+        }
+        return `${REMOTE_URL}/games/${game._id}/logo?t=${timestamp}`;
     };
 
     const fallbackSvg = (size = 50) =>
@@ -167,6 +239,44 @@ const ManageGames = () => {
                     background-color: #0d6efd;
                     border-color: #0d6efd;
                 }
+
+                /* JSON viewer */
+                .json-viewer-overlay {
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.8);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .json-card {
+                    background: #1e1e1e;
+                    color: #d4d4d4;
+                    width: 100%;
+                    max-width: 600px;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+                }
+                .json-card-header {
+                    background: #2d2d2d;
+                    padding: 12px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid #3c3c3c;
+                }
+                .json-card-body {
+                    padding: 20px;
+                    max-height: 70vh;
+                    overflow-y: auto;
+                    font-family: 'Consolas', 'Monaco', monospace;
+                    font-size: 0.9rem;
+                    line-height: 1.5;
+                }
+                pre { margin: 0; color: #9cdcfe; }
 
                 /* Hide scrollbar */
                 *::-webkit-scrollbar { display: none !important; }
@@ -258,6 +368,20 @@ const ManageGames = () => {
                 }
             `}</style>
 
+            {viewingJson && (
+                <div className="json-viewer-overlay" onClick={() => setViewingJson(null)}>
+                    <div className="json-card" onClick={e => e.stopPropagation()}>
+                        <div className="json-card-header">
+                            <h6 className="m-0 text-white">Raw JSON: {viewingJson.gameName}</h6>
+                            <button className="btn-close btn-close-white" onClick={() => setViewingJson(null)}></button>
+                        </div>
+                        <div className="json-card-body">
+                            <pre>{JSON.stringify(viewingJson, null, 2)}</pre>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <h1 className="mb-4" style={{ fontSize: 'clamp(1.35rem, 5vw, 2rem)' }}>Manage Games</h1>
 
             {/* ── Add / Edit Form ── */}
@@ -286,6 +410,16 @@ const ManageGames = () => {
                                 className="form-control"
                                 accept="image/*"
                             />
+                            {formData.gameLogoPreview && (
+                                <div className="mt-2">
+                                    <img
+                                        src={formData.gameLogoPreview}
+                                        alt="Logo Preview"
+                                        style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ddd' }}
+                                    />
+                                    <span className="ms-2 text-muted small">New image selected</span>
+                                </div>
+                            )}
                         </div>
                         <div className="col-12 col-md-4">
                             <label className="form-label fw-semibold">Iframe URL (embed link)</label>
@@ -346,10 +480,26 @@ const ManageGames = () => {
                                 className="game-card-logo"
                                 src={getLogoSrc(game)}
                                 alt={game.gameName}
-                                onError={(e) => { e.target.onerror = null; e.target.src = fallbackSvg(46); }}
+                                onError={(e) => {
+                                    if (e.target.src.includes('localhost:5000')) {
+                                        e.target.src = e.target.src.replace('http://localhost:5000', REMOTE_URL);
+                                    } else {
+                                        e.target.onerror = null;
+                                        e.target.src = fallbackSvg(46);
+                                    }
+                                }}
                             />
                             <div className="game-card-info">
-                                <div className="game-card-name">{game.gameName}</div>
+                                <div className="game-card-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {game.gameName}
+                                    <button
+                                        className="btn btn-sm btn-link p-0 text-primary"
+                                        onClick={(e) => { e.stopPropagation(); setViewingJson(game); }}
+                                        title="View JSON"
+                                    >
+                                        <i className="bi bi-code-slash" style={{ fontSize: '0.8rem' }}></i>
+                                    </button>
+                                </div>
                                 <span className={`status-pill ${game.status !== false ? 'active' : 'inactive'}`}>
                                     <span className="status-dot"></span>
                                     {game.status !== false ? 'Active' : 'Inactive'}
@@ -399,6 +549,14 @@ const ManageGames = () => {
                                                 <i className="bi bi-pencil-square me-2 text-primary"></i> Edit
                                             </button>
                                         </li>
+                                        <li>
+                                            <button
+                                                className="dropdown-item py-2"
+                                                onClick={() => { setViewingJson(game); setOpenDropdownId(null); }}
+                                            >
+                                                <i className="bi bi-code-slash me-2 text-info"></i> Raw JSON
+                                            </button>
+                                        </li>
                                         <li><hr className="dropdown-divider" /></li>
                                         <li>
                                             <button
@@ -437,12 +595,26 @@ const ManageGames = () => {
                                                 alt={game.gameName}
                                                 style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                                                 className="rounded"
-                                                onError={(e) => { e.target.onerror = null; e.target.src = fallbackSvg(50); }}
+                                                onError={(e) => {
+                                                    if (e.target.src.includes('localhost:5000')) {
+                                                        e.target.src = e.target.src.replace('http://localhost:5000', REMOTE_URL);
+                                                    } else {
+                                                        e.target.onerror = null;
+                                                        e.target.src = fallbackSvg(50);
+                                                    }
+                                                }}
                                             />
                                         </td>
                                         <td>
                                             <div className="text-truncate mx-auto" style={{ maxWidth: '160px' }}>
                                                 <strong>{game.gameName}</strong>
+                                                <button
+                                                    className="btn btn-sm btn-link p-0 ms-2 text-primary"
+                                                    onClick={() => setViewingJson(game)}
+                                                    title="View JSON"
+                                                >
+                                                    <i className="bi bi-code-slash"></i>
+                                                </button>
                                             </div>
                                         </td>
                                         <td className="d-none d-md-table-cell">
@@ -472,7 +644,7 @@ const ManageGames = () => {
                                                         setOpenDropdownId(openDropdownId === game._id ? null : game._id);
                                                     }}
                                                 >
-                                                    <i className="bi bi-pencil-square me-2 text-primary"></i> Edit
+                                                    <i className="bi bi-gear-fill me-1"></i> Edit
                                                 </button>
                                                 <ul
                                                     className={`dropdown-menu shadow ${openDropdownId === game._id ? 'show' : ''}`}
@@ -492,6 +664,14 @@ const ManageGames = () => {
                                                             <i className="bi bi-pencil-square me-2 text-primary"></i> Edit
                                                         </button>
                                                     </li>
+                                                    {/* <li>
+                                                        <button
+                                                            className="dropdown-item py-2"
+                                                            onClick={() => { setViewingJson(game); setOpenDropdownId(null); }}
+                                                        >
+                                                            <i className="bi bi-code-slash me-2 text-info"></i> Raw JSON
+                                                        </button>
+                                                    </li> */}
                                                     <li><hr className="dropdown-divider" /></li>
                                                     <li>
                                                         <button

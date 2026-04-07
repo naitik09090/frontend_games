@@ -2,12 +2,28 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './MoreGamesGrid.css';
 
-const MoreGamesGrid = ({ games, onCardClick, currentId, API_URL }) => {
+const MoreGamesGrid = ({ games, onCardClick, currentId }) => {
     // Tells the browser the exact layout size so it picks the perfect w-descriptor
     const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
 
-    const getLogoSrc = (gameId, size = 185) => `${API_URL}/games/${gameId}/logo?w=${size}`;
-    const getLogoSrcSet = (gameId) => `${getLogoSrc(gameId, 185)} 185w, ${getLogoSrc(gameId, 240)} 240w, ${getLogoSrc(gameId, 330)} 330w`;
+    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
+
+    const getLogoSrc = (g, size = 185) => {
+        if (!g) return '';
+        if (g.gameLogo) {
+            if (g.gameLogo.startsWith('data:')) return g.gameLogo;
+            if (g.gameLogo.startsWith('http')) return g.gameLogo;
+
+            const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
+            return `${REMOTE_URL}${path}`;
+        }
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}`;
+    };
+
+    const getLogoSrcSet = (g) => {
+        if (g.gameLogo) return undefined; // browser can scale local/base64 images
+        return `${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w`;
+    };
 
     return (
         <div className="games-grid">
@@ -23,8 +39,8 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, API_URL }) => {
                         <div className="game-card" onClick={() => onCardClick(g)} style={{ cursor: 'pointer' }}>
                             <div className="game-logo-wrapper">
                                 <img
-                                    src={getLogoSrc(g._id, 185)}
-                                    srcSet={getLogoSrcSet(g._id)}
+                                    src={getLogoSrc(g, 185)}
+                                    srcSet={getLogoSrcSet(g)}
                                     sizes={LOGO_SIZES}
                                     alt={g.gameName}
                                     className="game-logo"
@@ -33,8 +49,15 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, API_URL }) => {
                                     loading="lazy"
                                     decoding="async"
                                     onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+                                        if (REMOTE_URL && e.target.src.includes('localhost:5000')) {
+                                            e.target.src = e.target.src.replace('http://localhost:5000', REMOTE_URL);
+                                            if (e.target.srcset) {
+                                                e.target.srcset = e.target.srcset.replaceAll('http://localhost:5000', REMOTE_URL);
+                                            }
+                                        } else {
+                                            e.target.onerror = null;
+                                            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23333" width="200" height="200"/%3E%3Ctext fill="%23fff" font-size="18" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+                                        }
                                     }}
                                 />
                             </div>

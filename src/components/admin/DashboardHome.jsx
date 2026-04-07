@@ -1,28 +1,37 @@
 import React, { useState, useEffect } from 'react';
 
+import gamesData from '../../json/game.games.json';
+
 const DashboardHome = () => {
-    const [stats, setStats] = useState({ totalGames: 0 });
-    const [loading, setLoading] = useState(true);
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:5000'
-        : 'https://backend-games-phi.vercel.app';
+    const [stats, setStats] = useState({ totalGames: gamesData.length });
+    const [loading, setLoading] = useState(false);
+    const API_URL = 'https://backend-games-phi.vercel.app';
+    const token = localStorage.getItem('token');
 
     useEffect(() => {
         const fetchStats = async () => {
+            setLoading(true);
             try {
-                setLoading(true);
-                const response = await fetch(`${API_URL}/games`);
+                const response = await fetch(`${API_URL}/games`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Stats fetch failed');
                 const data = await response.json();
-                console.log(data);
-                setStats({ totalGames: data.pagination.totalGames });
+
+                const count = data.pagination?.totalGames ||
+                    (Array.isArray(data.games) ? data.games.length : (Array.isArray(data) ? data.length : gamesData.length));
+
+                setStats({ totalGames: count });
             } catch (err) {
-                console.error('Error fetching stats:', err);
+                console.warn('Backend reach failed for stats, using local fallback:', err);
+                setStats({ totalGames: gamesData.length });
             } finally {
                 setLoading(false);
             }
         };
+
         fetchStats();
-    }, [API_URL]);
+    }, [token]);
 
     return (
         <div>
