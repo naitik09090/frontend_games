@@ -60,7 +60,7 @@ const HomeMain = () => {
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=75`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=60`;
     };
 
     const getLogoSrcSet = (game) => {
@@ -77,7 +77,7 @@ const HomeMain = () => {
         if (pageNum > 1) setLoadingMore(true);
 
         try {
-            const limit = 50;
+            const limit = 24;
             const response = await fetch(`${API_URL}/games?page=${pageNum}&limit=${limit}`);
 
             let gamesDataSlice = [];
