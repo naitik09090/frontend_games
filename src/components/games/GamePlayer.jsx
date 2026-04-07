@@ -129,28 +129,7 @@ const GamePlayer = () => {
         };
     }, [isFullscreen]);
 
-    // Only show full page loader if we have NO game data at all
-    if (loading && !game) return (
-        <div className="game-player-gaming-wrapper d-flex justify-content-center align-items-center vh-100">
-            <div className="spinner-border text-info" role="status">
-                <span className="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    );
-
-    if (error) return (
-        <div className="container py-5 text-center">
-            <div className="alert alert-danger" role="alert">
-                Error loading game: {error}
-            </div>
-            <Link to="/" className="btn btn-primary mt-3">Back to Games</Link>
-        </div>
-    );
-
-    if (!game) return null;
-
-    // Use the 'file' field or first item in 'iframs' array as source
-    const iframeSrc = Array.isArray(game.iframs) && game.iframs.length > 0 ? game.iframs[0] : game.iframs;
+    const iframeSrc = game && (Array.isArray(game.iframs) && game.iframs.length > 0 ? game.iframs[0] : game.iframs);
 
     return (
         <div className="game-player-gaming-wrapper">
@@ -175,11 +154,18 @@ const GamePlayer = () => {
                             position: 'relative'
                         }}
                     >
-                        {iframeSrc ? (
+                        {loading && !game ? (
+                            <div className="d-flex flex-column align-items-center justify-content-center h-100">
+                                <div className="spinner-border text-info mb-3" role="status">
+                                    <span className="visually-hidden">Loading Game...</span>
+                                </div>
+                                <p className="text-white-50 small tracking-widest">INITIALIZING STREAM...</p>
+                            </div>
+                        ) : iframeSrc ? (
                             <>
                                 <iframe
                                     src={iframeSrc}
-                                    title={game.gameName || game.gameName}
+                                    title={game?.gameName || 'Game Player'}
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                     allowFullScreen
                                     scrolling="no"
@@ -204,6 +190,7 @@ const GamePlayer = () => {
                             <div className="d-flex flex-column align-items-center justify-content-center text-white-50 h-100">
                                 <i className="bi bi-exclamation-triangle fs-1 mb-3"></i>
                                 <p className="fw-bold">SIGNAL LOST: No playable source found</p>
+                                {error && <p className="small mt-2 text-danger">{error}</p>}
                             </div>
                         )}
                     </div>
