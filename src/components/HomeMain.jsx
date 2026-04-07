@@ -60,12 +60,12 @@ const HomeMain = () => {
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=45`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=30`;
     };
 
     const getLogoSrcSet = (game) => {
         if (game.gameLogo) return undefined;
-        return `${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w`;
+        return `${getLogoSrc(game, 150)} 150w, ${getLogoSrc(game, 200)} 200w, ${getLogoSrc(game, 250)} 250w`;
     };
 
     const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
