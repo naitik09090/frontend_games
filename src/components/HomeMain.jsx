@@ -60,7 +60,7 @@ const HomeMain = () => {
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=45`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=30`;
     };
 
     const getLogoSrcSet = (game) => {
