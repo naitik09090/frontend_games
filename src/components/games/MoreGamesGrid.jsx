@@ -8,7 +8,7 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
 
     // Tells the browser the exact layout size so it picks the perfect w-descriptor
     // On mobile (max-width: 768px), cards are roughly 160-185px wide.
-    const LOGO_SIZES = '(max-width: 768px) 165px, (max-width: 1024px) 220px, 240px';
+    const LOGO_SIZES = '(max-width: 768px) 165px, (max-width: 1024px) 180px, 240px';
 
     const getLogoSrc = (g, size = 185) => {
         if (!g) return '';
@@ -19,15 +19,15 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        // Lowered quality from 75 to 60 to fix Lighthouse 'increase compression' warning
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=60`;
+        // Lowering quality to 50 for better Lighthouse performance
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=50`;
     };
 
     const getLogoSrcSet = (g) => {
         // If it's a static local asset, we don't have multiple sizes on the backend yet
         if (g.gameLogo) return undefined; 
         
-        // Added 120w for small mobile views and 400w for high-DPI tablets/desktops
+        // Comprehensive sizes for all screen densities
         return `${getLogoSrc(g, 120)} 120w, ${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w, ${getLogoSrc(g, 400)} 400w`;
     };
 

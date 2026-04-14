@@ -60,15 +60,17 @@ const HomeMain = () => {
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=60`;
+        // Lowered quality to q=50 to satisfy strict Lighthouse compression audits
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=50`;
     };
 
     const getLogoSrcSet = (game) => {
         if (game.gameLogo) return undefined;
-        return `${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w`;
+        // Providing more granular sizes to let the browser pick the smallest sufficient one
+        return `${getLogoSrc(game, 120)} 120w, ${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w, ${getLogoSrc(game, 400)} 400w`;
     };
 
-    const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
+    const LOGO_SIZES = '(max-width: 768px) 165px, (max-width: 1024px) 180px, 240px';
 
     const fetchGames = async (pageNum) => {
         if (loadingRef.current && pageNum === 1) return;
@@ -231,8 +233,8 @@ const HomeMain = () => {
                                             className="game-logo"
                                             width="185"
                                             height="185"
-                                            loading={index < 4 ? "eager" : "lazy"}
-                                            fetchPriority={index < 4 ? "high" : "auto"}
+                                            loading={index < 2 ? "eager" : "lazy"}
+                                            fetchPriority={index < 2 ? "high" : "auto"}
                                             decoding="async"
                                             onError={(e) => {
                                                 if (e.target.src.includes('localhost:5000')) {
