@@ -12,7 +12,7 @@ const GAMES_CACHE_VERSION = 'v2'; // v2 = gameLogo stripped from list response
 
 const HomeMain = () => {
     const [localGames, setLocalGames] = useState([]);
-    
+
     // Initialize from cache for "Instant Load"
     const [games, setGames] = useState(() => {
         try {
@@ -337,8 +337,18 @@ const HomeMain = () => {
                                 </div>
                                 <div className="modal-body p-4">
                                     {(() => {
-                                        const file = (selectedGame.file && selectedGame.file.length > 0 && selectedGame.file[0]) ||
-                                            selectedGame.gameUrl;
+                                        let file = '';
+                                        if (selectedGame.file && selectedGame.file.length > 0) file = selectedGame.file[0];
+                                        else if (Array.isArray(selectedGame.iframs) && selectedGame.iframs.length > 0) file = selectedGame.iframs[0];
+                                        else if (typeof selectedGame.iframs === 'string' && selectedGame.iframs.trim() !== '') file = selectedGame.iframs;
+                                        else file = selectedGame.gameUrl;
+
+                                        if (file && typeof file === 'string' && file.includes('<iframe') && file.includes('src=')) {
+                                            const srcMatch = file.match(/src=["'](.*?)["']/);
+                                            if (srcMatch && srcMatch[1]) {
+                                                file = srcMatch[1];
+                                            }
+                                        }
 
                                         if (file) {
                                             return (

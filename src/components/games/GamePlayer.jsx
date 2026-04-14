@@ -42,10 +42,10 @@ const GamePlayer = () => {
                     setGame(currentGame);
                 }
 
-                // 2. Fetch related games from API
+                // 2. Fetch related games from API (Limited to 100 to optimize payload size)
                 let related = [];
                 try {
-                    const response = await fetch(`${API_URL}/games?limit=500`);
+                    const response = await fetch(`${API_URL}/games?limit=100`);
                     if (response.ok) {
                         const data = await response.json();
                         let fetchedGames = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
@@ -129,7 +129,24 @@ const GamePlayer = () => {
         };
     }, [isFullscreen]);
 
-    const iframeSrc = game && (Array.isArray(game.iframs) && game.iframs.length > 0 ? game.iframs[0] : game.iframs);
+    const getIframeSrc = () => {
+        if (!game) return null;
+
+        let url = null;
+        if (Array.isArray(game.iframs) && game.iframs.length > 0) {
+            url = game.iframs[0];
+        } else if (typeof game.iframs === 'string' && game.iframs.trim() !== '') {
+            url = game.iframs;
+        } else if (game.gameUrl && typeof game.gameUrl === 'string' && game.gameUrl.trim() !== '') {
+            url = game.gameUrl;
+        } else if (game.iframe && typeof game.iframe === 'string' && game.iframe.trim() !== '') {
+            url = game.iframe;
+        }
+
+        return url;
+    };
+
+    const iframeSrc = getIframeSrc();
 
     return (
         <div className="game-player-gaming-wrapper">

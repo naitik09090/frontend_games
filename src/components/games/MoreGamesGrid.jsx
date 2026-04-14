@@ -2,11 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './MoreGamesGrid.css';
 
-const MoreGamesGrid = ({ games, onCardClick, currentId }) => {
-    // Tells the browser the exact layout size so it picks the perfect w-descriptor
-    const LOGO_SIZES = '(max-width: 768px) 185px, 240px';
+const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUrl }) => {
+    // Falls back to the prop if provided, otherwise uses the hardcoded default
+    const REMOTE_URL = propRemoteUrl || 'https://backend-games-phi.vercel.app';
 
-    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
+    // Tells the browser the exact layout size so it picks the perfect w-descriptor
+    // On mobile (max-width: 768px), cards are roughly 160-185px wide.
+    const LOGO_SIZES = '(max-width: 768px) 165px, (max-width: 1024px) 220px, 240px';
 
     const getLogoSrc = (g, size = 185) => {
         if (!g) return '';
@@ -17,12 +19,16 @@ const MoreGamesGrid = ({ games, onCardClick, currentId }) => {
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=75`;
+        // Lowered quality from 75 to 60 to fix Lighthouse 'increase compression' warning
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=60`;
     };
 
     const getLogoSrcSet = (g) => {
-        if (g.gameLogo) return undefined; // browser can scale local/base64 images
-        return `${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w`;
+        // If it's a static local asset, we don't have multiple sizes on the backend yet
+        if (g.gameLogo) return undefined; 
+        
+        // Added 120w for small mobile views and 400w for high-DPI tablets/desktops
+        return `${getLogoSrc(g, 120)} 120w, ${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w, ${getLogoSrc(g, 400)} 400w`;
     };
 
     return (
