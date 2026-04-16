@@ -4,6 +4,7 @@ import './GamePlayer.css';
 
 // Lazy load the 'More Adventures' grid to reduce initial JS payload for the main game player.
 const MoreGamesGrid = lazy(() => import('./MoreGamesGrid.jsx'));
+const GameLoader = lazy(() => import('./GameLoader.jsx'));
 
 const GamePlayer = () => {
     const { id } = useParams();
@@ -20,6 +21,8 @@ const GamePlayer = () => {
     const [error, setError] = useState(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [bottomReady, setBottomReady] = useState(false);
+    const [iframeLoaded, setIframeLoaded] = useState(false);
+    const [isTimedOut, setIsTimedOut] = useState(false);
     const REMOTE_URL = 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
 
@@ -28,6 +31,8 @@ const GamePlayer = () => {
 
         const loadGameAndRelated = async () => {
             setLoading(true);
+            setIframeLoaded(false);
+            setIsTimedOut(false);
             setBottomReady(false);
             setError(null);
 
@@ -94,16 +99,30 @@ const GamePlayer = () => {
         };
     }, [id]);
 
+    // Safety timeout: if iframe doesn't load in 12s, show manual link
+    useEffect(() => {
+        let timer;
+        if (!iframeLoaded && !loading && game) {
+            timer = setTimeout(() => {
+                setIsTimedOut(true);
+            }, 12000);
+        }
+        return () => clearTimeout(timer);
+    }, [iframeLoaded, loading, game, id]);
+
     const handleCardClick = (clickedGame) => {
         // Optimistically set the game to show it immediately
         setGame(clickedGame);
-        // Reset fullscreen on switch
+        // Reset state for new game
+        setIframeLoaded(false);
+        setIsTimedOut(false);
         setIsFullscreen(false);
 
-        // Navigate to the same component but with a different ID
-        navigate(`/game/${clickedGame._id}`);
+        // Navigate with state so the component sees the new data immediately
+        navigate(`/game/${clickedGame._id}`, { state: { gameData: clickedGame } });
+
         // Instant scroll to top
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'instant' });
     };
 
     // Effect to lock body scroll when in fullscreen or landscape (mobile)
@@ -143,10 +162,18 @@ const GamePlayer = () => {
             url = game.iframe;
         }
 
+        if (url && (url.includes('localhost') || url.includes('127.0.0.1'))) {
+            const isLocal = window.location.hostname !== 'localhost';
+            if (isLocal) {
+                url = url.replace('localhost', window.location.hostname).replace('127.0.0.1', window.location.hostname);
+            }
+        }
+
         return url;
     };
 
     const iframeSrc = getIframeSrc();
+    const showLoader = (loading && !game) || !iframeLoaded;
 
     return (
         <div className="game-player-gaming-wrapper">
@@ -171,16 +198,29 @@ const GamePlayer = () => {
                             position: 'relative'
                         }}
                     >
-                        {loading && !game ? (
-                            <div className="d-flex flex-column align-items-center justify-content-center h-100">
-                                <div className="spinner-border text-info mb-3" role="status">
-                                    <span className="visually-hidden">Loading Game...</span>
+                        {(showLoader || isTimedOut) && (
+                            <Suspense fallback={null}>
+                                <div className="position-absolute inset-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" style={{ zIndex: 10, background: '#0f0c29' }}>
+                                    {!isTimedOut ? (
+                                        <GameLoader />
+                                    ) : (
+                                        <div className="text-center p-4">
+                                            <i className="bi bi-wifi-off fs-1 text-warning mb-3"></i>
+                                            <p className="text-white fw-bold mb-1">SIGNAL WEAK</p>
+                                            <p className="text-white-50 small mb-4">Taking longer than expected... source might be restricted.</p>
+                                            <div className="d-flex gap-2 justify-content-center">
+                                                <button className="btn btn-sm btn-outline-info" onClick={() => window.location.reload()}>RETRY</button>
+                                                <a href={iframeSrc} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-info">OPEN IN NEW TAB</a>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <p className="text-white-50 small tracking-widest">INITIALIZING STREAM...</p>
-                            </div>
-                        ) : iframeSrc ? (
+                            </Suspense>
+                        )}
+                        {iframeSrc ? (
                             <>
                                 <iframe
+                                    key={game?._id || id}
                                     src={iframeSrc}
                                     title={game?.gameName || 'Game Player'}
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -192,7 +232,8 @@ const GamePlayer = () => {
                                         height: '100%',
                                         overflow: 'hidden'
                                     }}
-                                    className={`${isFullscreen ? '' : 'rounded-3 shadow-lg'}`}
+                                    onLoad={() => setIframeLoaded(true)}
+                                    className={`${isFullscreen ? '' : 'rounded-3 shadow-lg'} ${iframeLoaded ? 'opacity-100' : 'opacity-0'}`}
                                 ></iframe>
 
                                 <button

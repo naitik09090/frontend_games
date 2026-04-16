@@ -1,100 +1,181 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Games Hub – Play Free Online Games</title>
-    <meta name="description" content="Play a collection of free online games including puzzle, sorting, and adventure games. Fun for all ages!" />
-    <meta name="theme-color" content="#0f0c29" />
-    <meta name="robots" content="index, follow" />
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
-    <link rel="apple-touch-icon" href="/vite.svg" />
 
-    <!-- Preload Bootstrap Icons Font to strictly prevent Navbar Layout Shift on initial load -->
-    <link rel="preload" href="/bootstrap-icons.woff2" as="font" type="font/woff2" crossorigin />
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Games Hub – Play Free Online Games</title>
+  <meta name="description"
+    content="Play a collection of free online games including puzzle, sorting, and adventure games. Fun for all ages!" />
+  <meta name="theme-color" content="#0f0c29" />
+  <meta name="robots" content="index, follow" />
+  <link rel="apple-touch-icon" href="/vite.svg" />
 
-    <!-- ─── Critical inline CSS ───────────────────────────────────────────
+  <!-- Preload Bootstrap Icons Font to strictly prevent Navbar Layout Shift on initial load -->
+  <link rel="preload" href="/bootstrap-icons.woff2" as="font" type="font/woff2" crossorigin />
+
+  <!-- ─── Critical inline CSS ───────────────────────────────────────────
          Paint the page background & baseline immediately — zero blocking.
          Keeps the viewport from flashing white while the full bundle loads.
     ──────────────────────────────────────────────────────────────────────── -->
-    <style>
-      :root {
-        --bs-body-bg: #0f0c29;
-        --bs-body-color: #fff;
-      }
-      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-      html,body{
-        min-height:100vh;
-        background:var(--bs-body-bg);
-        color:var(--bs-body-color);
-        font-family:'Outfit','Inter',system-ui,sans-serif;
-        -ms-overflow-style:none;
-        scrollbar-width:none;
-      }
-      body::-webkit-scrollbar{display:none}
-      #root{min-height:100vh}
-      /* Skeleton loader so page looks alive before React hydrates */
-      #root:empty::after{
-        content:'';
-        display:block;
-        width:40px;height:40px;
-        position:absolute;
-        top:50%;left:50%;
-        margin:-20px 0 0 -20px;
-        border:3px solid rgba(0,210,255,.3);
-        border-top-color:#00d2ff;
-        border-radius:50%;
-        animation:_spin .75s linear infinite;
-      }
-      @keyframes _spin{to{transform:rotate(360deg)}}
+  <style>
+    :root {
+      --bs-body-bg: #0f0c29;
+      --bs-body-color: #fff;
+    }
 
-      /* Bootstrap Icons font — font-display:swap prevents CLS from icon font swap */
-      @font-face {
-        font-family: "bootstrap-icons";
-        src: url("/bootstrap-icons.woff2") format("woff2");
-        font-display: block;
-        font-weight: normal;
-        font-style: normal;
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html,
+    body {
+      min-height: 100vh;
+      background: var(--bs-body-bg);
+      color: var(--bs-body-color);
+      font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    body::-webkit-scrollbar {
+      display: none
+    }
+
+    #root {
+      min-height: 100vh
+    }
+
+    /* Skeleton loader so page looks alive before React hydrates */
+    #root:empty::after {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin: -20px 0 0 -20px;
+      border: 3px solid rgba(0, 210, 255, .3);
+      border-top-color: #00d2ff;
+      border-radius: 50%;
+      animation: _spin .75s linear infinite;
+    }
+
+    @keyframes _spin {
+      to {
+        transform: rotate(360deg)
       }
-      .bi::before,
-      [class^="bi-"]::before,
-      [class*=" bi-"]::before {
-        display: inline-block;
-        font-family: bootstrap-icons !important;
-        font-style: normal;
-        font-weight: normal !important;
-        font-variant: normal;
-        text-transform: none;
-        line-height: 1;
-        vertical-align: -.125em;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      .bi-arrows-fullscreen::before { content: "\f14d" }
-      .bi-box-arrow-right::before { content: "\f1c3" }
-      .bi-chevron-left::before { content: "\f284" }
-      .bi-controller::before { content: "\f2d4" }
-      .bi-exclamation-triangle::before { content: "\f33b" }
-      .bi-fullscreen-exit::before { content: "\f3de" }
-      .bi-fullscreen::before { content: "\f3df" }
-      .bi-list::before { content: "\f479" }
-      .bi-pencil-square::before { content: "\f4ca" }
-      .bi-person-check-fill::before { content: "\f4d5" }
-      .bi-speedometer2::before { content: "\f580" }
-      .bi-three-dots-vertical::before { content: "\f5d3" }
-      .bi-trash::before { content: "\f5de" }
-      .bi-x-lg::before { content: "\f659" }
-    </style>
+    }
 
-    <!-- Preconnects removed to satisfy Lighthouse "Unused preconnect" rule (fonts and icons are loaded locally) -->
+    #root:empty::before {
+      content: 'SYSTEM INITIALIZING';
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: sans-serif;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.3);
+    }
 
-    <!-- Bootstrap CSS is now imported natively via main.jsx and purged through PostCSS during build! -->
+    /* Bootstrap Icons font — font-display:swap prevents CLS from icon font swap */
+    @font-face {
+      font-family: "bootstrap-icons";
+      src: url("/bootstrap-icons.woff2") format("woff2");
+      font-display: block;
+      font-weight: normal;
+      font-style: normal;
+    }
 
-    <!-- Bootstrap Icons CSS is completely inlined above to eliminate render-blocking network requests -->
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    .bi::before,
+    [class^="bi-"]::before,
+    [class*=" bi-"]::before {
+      display: inline-block;
+      font-family: bootstrap-icons !important;
+      font-style: normal;
+      font-weight: normal !important;
+      font-variant: normal;
+      text-transform: none;
+      line-height: 1;
+      vertical-align: -.125em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .bi-arrows-fullscreen::before {
+      content: "\f14d"
+    }
+
+    .bi-box-arrow-right::before {
+      content: "\f1c3"
+    }
+
+    .bi-chevron-left::before {
+      content: "\f284"
+    }
+
+    .bi-controller::before {
+      content: "\f2d4"
+    }
+
+    .bi-exclamation-triangle::before {
+      content: "\f33b"
+    }
+
+    .bi-fullscreen-exit::before {
+      content: "\f3de"
+    }
+
+    .bi-fullscreen::before {
+      content: "\f3df"
+    }
+
+    .bi-list::before {
+      content: "\f479"
+    }
+
+    .bi-pencil-square::before {
+      content: "\f4ca"
+    }
+
+    .bi-person-check-fill::before {
+      content: "\f4d5"
+    }
+
+    .bi-speedometer2::before {
+      content: "\f580"
+    }
+
+    .bi-three-dots-vertical::before {
+      content: "\f5d3"
+    }
+
+    .bi-trash::before {
+      content: "\f5de"
+    }
+
+    .bi-x-lg::before {
+      content: "\f659"
+    }
+  </style>
+
+  <!-- Preconnects removed to satisfy Lighthouse "Unused preconnect" rule (fonts and icons are loaded locally) -->
+
+  <!-- Bootstrap CSS is now imported natively via main.jsx and purged through PostCSS during build! -->
+
+  <!-- Bootstrap Icons CSS is completely inlined above to eliminate render-blocking network requests -->
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

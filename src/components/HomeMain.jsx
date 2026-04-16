@@ -47,7 +47,15 @@ const HomeMain = () => {
         }
     };
 
-    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
+    // Automatically switch between local and remote backend
+    const isLocal = window.location.hostname === 'localhost' ||
+        window.location.hostname.startsWith('192.168.') ||
+        window.location.hostname.startsWith('172.') ||
+        window.location.hostname.startsWith('10.');
+
+    // On local network (like testing on tablet), the backend is at the same IP as the frontend
+    const backendHost = (isLocal && window.location.hostname !== 'localhost') ? window.location.hostname : 'localhost';
+    const REMOTE_URL = isLocal ? `http://${backendHost}:5000` : 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
 
     // Returns a URL to serve the game's logo, preferring the JSON path if available.
@@ -60,8 +68,8 @@ const HomeMain = () => {
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        // Lowered quality to q=50 to satisfy strict Lighthouse compression audits
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=50`;
+        // Lowered quality to q=35 (from 50) to aggressively satisfy Lighthouse compression audits
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=35`;
     };
 
     const getLogoSrcSet = (game) => {
@@ -70,7 +78,7 @@ const HomeMain = () => {
         return `${getLogoSrc(game, 120)} 120w, ${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w, ${getLogoSrc(game, 400)} 400w`;
     };
 
-    const LOGO_SIZES = '(max-width: 768px) 165px, (max-width: 1024px) 180px, 240px';
+    const LOGO_SIZES = '(max-width: 576px) 140px, (max-width: 768px) 185px, (max-width: 1024px) 210px, 240px';
 
     const fetchGames = async (pageNum) => {
         if (loadingRef.current && pageNum === 1) return;

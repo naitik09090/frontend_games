@@ -4,11 +4,17 @@ import './MoreGamesGrid.css';
 
 const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUrl }) => {
     // Falls back to the prop if provided, otherwise uses the hardcoded default
-    const REMOTE_URL = propRemoteUrl || 'https://backend-games-phi.vercel.app';
+    const isLocal = window.location.hostname === 'localhost' || 
+                    window.location.hostname.startsWith('192.168.') ||
+                    window.location.hostname.startsWith('10.');
+                    
+    const backendHost = (isLocal && window.location.hostname !== 'localhost') ? window.location.hostname : 'localhost';
+    const DEFAULT_REMOTE = isLocal ? `http://${backendHost}:5000` : 'https://backend-games-phi.vercel.app';
+    const REMOTE_URL = propRemoteUrl || DEFAULT_REMOTE;
 
     // Tells the browser the exact layout size so it picks the perfect w-descriptor
     // On mobile (max-width: 768px), cards are roughly 160-185px wide.
-    const LOGO_SIZES = '(max-width: 768px) 165px, (max-width: 1024px) 180px, 240px';
+    const LOGO_SIZES = '(max-width: 576px) 140px, (max-width: 768px) 185px, (max-width: 1024px) 210px, 240px';
 
     const getLogoSrc = (g, size = 185) => {
         if (!g) return '';
@@ -19,8 +25,8 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
             return `${REMOTE_URL}${path}`;
         }
-        // Lowering quality to 50 for better Lighthouse performance
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=50`;
+        // Lowering quality to 35 for better Lighthouse performance (was 50)
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=35`;
     };
 
     const getLogoSrcSet = (g) => {

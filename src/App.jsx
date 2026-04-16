@@ -13,13 +13,12 @@ const Form = lazy(() => import('./components/Form.jsx'))
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout.jsx'))
 const DashboardHome = lazy(() => import('./components/admin/DashboardHome.jsx'))
 const ManageGames = lazy(() => import('./components/admin/ManageGames.jsx'))
+import GameLoader from './components/games/GameLoader.jsx'
 
-// Minimal loading fallback while lazy chunks download
+// Premium loading fallback for all lazy-loaded routes
 const PageLoader = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f0c29' }}>
-    <div className="spinner-border text-light" role="status">
-      <span className="visually-hidden">Loading...</span>
-    </div>
+  <div style={{ height: '100vh', background: '#0f0c29', position: 'relative' }}>
+    <GameLoader />
   </div>
 )
 

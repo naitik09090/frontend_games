@@ -31,7 +31,14 @@ const ManageGames = () => {
     const [itemsPerPage] = useState(10);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const API_URL = 'https://backend-games-phi.vercel.app';
+    // Automatically switch between local and remote backend
+    const isLocal = window.location.hostname === 'localhost' || 
+                    window.location.hostname.startsWith('192.168.') || 
+                    window.location.hostname.startsWith('172.') ||
+                    window.location.hostname.startsWith('10.');
+
+    const backendHost = (isLocal && window.location.hostname !== 'localhost') ? window.location.hostname : 'localhost';
+    const API_URL = isLocal ? `http://${backendHost}:5000` : 'https://backend-games-phi.vercel.app';
     const REMOTE_URL = API_URL;
 
     useEffect(() => {
@@ -141,8 +148,13 @@ const ManageGames = () => {
                 syncChannel.close();
             } catch (e) { }
         } catch (err) {
-            console.error(err);
-            alert(`Error: ${err.message}`);
+            console.error('Submit Error:', err);
+            // If it's a TypeError and the message is 'Failed to fetch', it's usually a network/CORS issue
+            if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+                alert('Connection Error: Could not reach the backend server. Please check your internet connection or backend status.');
+            } else {
+                alert(`Error: ${err.message}`);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -216,9 +228,9 @@ const ManageGames = () => {
             if (game.gameLogo.startsWith('http')) return game.gameLogo;
 
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
-            return `${REMOTE_URL}${path}?q=75&t=${timestamp}`;
+            return `${REMOTE_URL}${path}?q=35&t=${timestamp}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?q=75&t=${timestamp}`;
+        return `${REMOTE_URL}/games/${game._id}/logo?q=35&t=${timestamp}`;
     };
 
     const fallbackSvg = (size = 50) =>
