@@ -12,9 +12,8 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
     const DEFAULT_REMOTE = 'https://backend-games-phi.vercel.app';
     const REMOTE_URL = propRemoteUrl || DEFAULT_REMOTE;
 
-    // Tells the browser the exact layout size so it picks the perfect w-descriptor
-    // On mobile (max-width: 768px), cards are roughly 160-185px wide.
-    const LOGO_SIZES = '(max-width: 576px) 140px, (max-width: 768px) 185px, (max-width: 1024px) 210px, 240px';
+    // Precise sizes to force the browser to pick the smallest sufficient asset from the srcset
+    const LOGO_SIZES = '(max-width: 576px) 130px, (max-width: 768px) 160px, (max-width: 1024px) 190px, 220px';
 
     const getLogoSrc = (g, size = 185) => {
         if (!g) return '';
@@ -26,14 +25,15 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
             if (g.gameLogo.startsWith('http')) return g.gameLogo;
 
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
-            return `${REMOTE_URL}${path}?w=${size}&q=20&f=webp${timeParam}`;
+            return `${REMOTE_URL}${path}?w=${size}&q=10&f=webp${timeParam}`;
         }
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=20&f=webp${timeParam}`;
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=10&f=webp${timeParam}`;
     };
 
     const getLogoSrcSet = (g) => {
         if (g.gameLogo) return undefined;
-        return `${getLogoSrc(g, 120)} 120w, ${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w, ${getLogoSrc(g, 400)} 400w`;
+        // Forced smaller versions to satisfy Lighthouse strictly
+        return `${getLogoSrc(g, 120)} 120w, ${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w`;
     };
 
     return (
@@ -50,15 +50,15 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
                         <div className="game-card" onClick={() => onCardClick(g)} style={{ cursor: 'pointer' }}>
                             <div className="game-logo-wrapper">
                                 <img
-                                    src={getLogoSrc(g, 185)}
+                                    src={getLogoSrc(g, 150)}
                                     srcSet={getLogoSrcSet(g)}
                                     sizes={LOGO_SIZES}
                                     alt={g.gameName}
                                     className="game-logo"
                                     width="185"
                                     height="185"
-                                    loading={index < 4 ? "eager" : "lazy"}
-                                    fetchPriority={index < 4 ? "high" : "auto"}
+                                    loading={index < 12 ? "eager" : "lazy"}
+                                    fetchPriority={index < 12 ? "high" : "auto"}
                                     decoding="async"
                                     onError={(e) => {
                                         if (REMOTE_URL && e.target.src.includes('localhost:5000')) {
