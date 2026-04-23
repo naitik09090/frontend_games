@@ -2,6 +2,15 @@ import React from 'react';
 import './GameLoader.css';
 
 const GameLoader = ({ type = 'full' }) => {
+    const typeClasses = {
+        full: 'loader-type-full',
+        viewport: 'loader-type-viewport',
+        inline: 'loader-type-inline',
+        minimal: 'loader-type-minimal'
+    };
+
+    const containerClass = `game-loader-container ${typeClasses[type] || typeClasses.full}`;
+
     const statuses = [
         "ESTABLISHING TACTICAL LINK",
         "SYNCING QUANTUM STREAM",
@@ -20,7 +29,7 @@ const GameLoader = ({ type = 'full' }) => {
     }, [type]);
 
     return (
-        <div className={`game-loader-container loader-type-${type}`}>
+        <div className={containerClass}>
             {(type === 'full' || type === 'viewport') && (
                 <>
                     <div className="loader-particles"></div>

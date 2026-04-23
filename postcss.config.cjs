@@ -19,6 +19,8 @@ module.exports = {
                     /^nav/,
                     /^active/,
                     /^bi-/,
+                    /^game-loader-/,
+                    /^loader-/,
                 ],
                 defaultExtractor: content => content.match(/[\w-/:]+(?<!:)/g) || []
             })
