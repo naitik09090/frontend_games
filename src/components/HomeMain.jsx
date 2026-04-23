@@ -3,7 +3,6 @@ import GameLoader from './games/GameLoader';
 import Navbar from './layout/Navbar';
 import './HomeMain.css';
 import { useEffect, useRef, useState } from 'react';
-// import stickmanLogo from '../assets/stickman.jpg';
 
 // Bump this version whenever the API response shape changes (e.g. fields removed).
 // Users' old localStorage entries will be discarded automatically.
@@ -48,15 +47,15 @@ const HomeMain = () => {
         const globalVersion = localStorage.getItem('globalGameUpdateVersion');
         const timeParam = globalVersion ? `&v=${globalVersion}` : '';
 
-        // Added &f=webp and lowered q to 30 to satisfy Lighthouse "Efficiently encode images" audit
+        // Lowered quality to 20 and enforced WebP for strict Lighthouse "Efficiently encode images" compliance
         if (game.gameLogo) {
             if (game.gameLogo.startsWith('data:')) return game.gameLogo;
             if (game.gameLogo.startsWith('http')) return game.gameLogo;
 
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
-            return `${REMOTE_URL}${path}?w=${size}&q=30&f=webp${timeParam}`;
+            return `${REMOTE_URL}${path}?w=${size}&q=20&f=webp${timeParam}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=30&f=webp${timeParam}`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=20&f=webp${timeParam}`;
     };
 
     const getLogoSrcSet = (game) => {

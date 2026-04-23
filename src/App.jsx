@@ -9,7 +9,6 @@ import { lazy, Suspense, useEffect } from 'react'
 const HomeMain = lazy(() => import('./components/HomeMain.jsx'))
 const GamePlayer = lazy(() => import('./components/games/GamePlayer.jsx'))
 const Login = lazy(() => import('./components/Login.jsx'))
-const Form = lazy(() => import('./components/Form.jsx'))
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout.jsx'))
 const DashboardHome = lazy(() => import('./components/admin/DashboardHome.jsx'))
 const ManageGames = lazy(() => import('./components/admin/ManageGames.jsx'))
@@ -48,15 +47,10 @@ function App() {
             {/* Public Routes */}
             <Route path='/' element={<HomeMain />} />
             <Route path='/game' element={<HomeMain />} />
-            {/* <Route path='/gm-games' element={<GMGamesList />} /> */}
             <Route path='/game/:id' element={<GamePlayer />} />
 
             {/* Admin / Protected Routes */}
-            <Route path='/add-game' element={
-              <ProtectedRoute>
-                <Form />
-              </ProtectedRoute>
-            } />
+            <Route path='/add-game' element={<Navigate to="/admin/games" replace />} />
 
             {/* Admin Dashboard Routes */}
             <Route path='/admin' element={

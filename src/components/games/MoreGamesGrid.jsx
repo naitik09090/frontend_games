@@ -26,17 +26,13 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
             if (g.gameLogo.startsWith('http')) return g.gameLogo;
 
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
-            return `${REMOTE_URL}${path}?w=${size}&q=35${timeParam}`;
+            return `${REMOTE_URL}${path}?w=${size}&q=20&f=webp${timeParam}`;
         }
-        // Lowering quality to 35 for better Lighthouse performance (was 50)
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=35${timeParam}`;
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=20&f=webp${timeParam}`;
     };
 
     const getLogoSrcSet = (g) => {
-        // If it's a static local asset, we don't have multiple sizes on the backend yet
         if (g.gameLogo) return undefined;
-
-        // Comprehensive sizes for all screen densities
         return `${getLogoSrc(g, 120)} 120w, ${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w, ${getLogoSrc(g, 400)} 400w`;
     };
 
@@ -61,7 +57,8 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
                                     className="game-logo"
                                     width="185"
                                     height="185"
-                                    loading="lazy"
+                                    loading={index < 4 ? "eager" : "lazy"}
+                                    fetchPriority={index < 4 ? "high" : "auto"}
                                     decoding="async"
                                     onError={(e) => {
                                         if (REMOTE_URL && e.target.src.includes('localhost:5000')) {
