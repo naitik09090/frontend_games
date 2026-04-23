@@ -3,9 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect } from 'react'
 
 // Lazy-load ALL routes so each page only downloads the JS it actually needs.
-// Lighthouse was flagging 25.8 KiB of unused JS because HomeMain + GamePlayer
-// were eagerly bundled together — GamePlayer was unused on the home page and
-// vice versa.
 const HomeMain = lazy(() => import('./components/HomeMain.jsx'))
 const GamePlayer = lazy(() => import('./components/games/GamePlayer.jsx'))
 const Login = lazy(() => import('./components/Login.jsx'))
@@ -42,17 +39,15 @@ function App() {
       <main id="main-content" className="no-select">
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            <Route path='/admin/login' element={<Login />} />
-
             {/* Public Routes */}
             <Route path='/' element={<HomeMain />} />
             <Route path='/game' element={<HomeMain />} />
             <Route path='/game/:id' element={<GamePlayer />} />
 
-            {/* Admin / Protected Routes */}
-            <Route path='/add-game' element={<Navigate to="/admin/games" replace />} />
+            {/* Admin Login */}
+            <Route path='/admin/login' element={<Login />} />
 
-            {/* Admin Dashboard Routes */}
+            {/* Admin Dashboard Routes (Protected) */}
             <Route path='/admin' element={
               <ProtectedRoute>
                 <AdminLayout />
@@ -63,6 +58,8 @@ function App() {
               <Route path="games" element={<ManageGames />} />
             </Route>
 
+            {/* Fallback for unknown routes */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </main>
@@ -71,4 +68,3 @@ function App() {
 }
 
 export default App
-

@@ -3,6 +3,7 @@ import GameLoader from './games/GameLoader';
 import Navbar from './layout/Navbar';
 import './HomeMain.css';
 import { useEffect, useRef, useState } from 'react';
+// import stickmanLogo from '../assets/stickman.jpg';
 
 // Bump this version whenever the API response shape changes (e.g. fields removed).
 // Users' old localStorage entries will be discarded automatically.
@@ -41,31 +42,31 @@ const HomeMain = () => {
     const REMOTE_URL = 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
 
-    // Ultra-optimized image delivery: Enforced WebP format and minimum quality (q=10) 
-    // to satisfy strict Lighthouse "Improve image delivery" audits while maintaining high LCP scores.
+    // Returns a URL to serve the game's logo, preferring the JSON path if available.
     const getLogoSrc = (game, size = 185) => {
         if (!game) return '';
         const globalVersion = localStorage.getItem('globalGameUpdateVersion');
         const timeParam = globalVersion ? `&v=${globalVersion}` : '';
 
+        // Added &f=webp and lowered q to 30 to satisfy Lighthouse "Efficiently encode images" audit
         if (game.gameLogo) {
             if (game.gameLogo.startsWith('data:')) return game.gameLogo;
             if (game.gameLogo.startsWith('http')) return game.gameLogo;
 
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
-            return `${REMOTE_URL}${path}?w=${size}&q=10&f=webp${timeParam}`;
+            return `${REMOTE_URL}${path}?w=${size}&q=30&f=webp${timeParam}`;
         }
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=10&f=webp${timeParam}`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=30&f=webp${timeParam}`;
     };
 
     const getLogoSrcSet = (game) => {
         if (game.gameLogo) return undefined;
-        // Removed 400w to force browser to use smaller, more compressed versions on high-density screens
-        return `${getLogoSrc(game, 120)} 120w, ${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w`;
+        // Providing more granular sizes to let the browser pick the smallest sufficient one
+        return `${getLogoSrc(game, 120)} 120w, ${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w, ${getLogoSrc(game, 400)} 400w`;
     };
 
-    // Precise sizes to ensure the browser picks the smallest possible descriptor from the srcset
-    const LOGO_SIZES = '(max-width: 576px) 130px, (max-width: 768px) 160px, (max-width: 1024px) 190px, 220px';
+    // Adjusted sizes to better match the grid's responsive column widths
+    const LOGO_SIZES = '(max-width: 576px) 160px, (max-width: 768px) 185px, (max-width: 1024px) 240px, 300px';
 
     const fetchGames = async (pageNum) => {
         if (loadingRef.current && pageNum === 1) return;
@@ -206,15 +207,15 @@ const HomeMain = () => {
                                 <div className="game-card" onClick={() => handleCardClick(game)} style={{ cursor: 'pointer' }}>
                                     <div className="game-logo-wrapper">
                                         <img
-                                            src={getLogoSrc(game, 150)}
+                                            src={getLogoSrc(game, 185)}
                                             srcSet={getLogoSrcSet(game)}
                                             sizes={LOGO_SIZES}
                                             alt={game.gameName}
                                             className="game-logo"
                                             width="185"
                                             height="185"
-                                            loading={index < 12 ? "eager" : "lazy"}
-                                            fetchPriority={index < 12 ? "high" : "auto"}
+                                            loading={index < 4 ? "eager" : "lazy"}
+                                            fetchPriority={index < 4 ? "high" : "auto"}
                                             decoding="async"
                                             onError={(e) => {
                                                 if (e.target.src.includes('localhost:5000')) {
