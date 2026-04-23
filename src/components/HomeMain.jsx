@@ -48,15 +48,15 @@ const HomeMain = () => {
         const globalVersion = localStorage.getItem('globalGameUpdateVersion');
         const timeParam = globalVersion ? `&v=${globalVersion}` : '';
 
+        // Added &f=webp and lowered q to 30 to satisfy Lighthouse "Efficiently encode images" audit
         if (game.gameLogo) {
             if (game.gameLogo.startsWith('data:')) return game.gameLogo;
             if (game.gameLogo.startsWith('http')) return game.gameLogo;
 
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
-            return `${REMOTE_URL}${path}?w=${size}&q=35${timeParam}`;
+            return `${REMOTE_URL}${path}?w=${size}&q=30&f=webp${timeParam}`;
         }
-        // Lowered quality to q=35 (from 50) to aggressively satisfy Lighthouse compression audits
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=35${timeParam}`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=30&f=webp${timeParam}`;
     };
 
     const getLogoSrcSet = (game) => {
@@ -65,7 +65,8 @@ const HomeMain = () => {
         return `${getLogoSrc(game, 120)} 120w, ${getLogoSrc(game, 185)} 185w, ${getLogoSrc(game, 240)} 240w, ${getLogoSrc(game, 330)} 330w, ${getLogoSrc(game, 400)} 400w`;
     };
 
-    const LOGO_SIZES = '(max-width: 576px) 140px, (max-width: 768px) 185px, (max-width: 1024px) 210px, 240px';
+    // Adjusted sizes to better match the grid's responsive column widths
+    const LOGO_SIZES = '(max-width: 576px) 160px, (max-width: 768px) 185px, (max-width: 1024px) 240px, 300px';
 
     const fetchGames = async (pageNum) => {
         if (loadingRef.current && pageNum === 1) return;
@@ -107,9 +108,6 @@ const HomeMain = () => {
             });
         } catch (err) {
             console.warn('⚠️ API fetch failed, falling back to local JSON data:', err.message);
-            // Fallback for page 1
-            // Fallback for page 1: Fetch local JSON only when needed
-            console.log(err.message);
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -216,8 +214,8 @@ const HomeMain = () => {
                                             className="game-logo"
                                             width="185"
                                             height="185"
-                                            loading={index < 2 ? "eager" : "lazy"}
-                                            fetchPriority={index < 2 ? "high" : "auto"}
+                                            loading={index < 4 ? "eager" : "lazy"}
+                                            fetchPriority={index < 4 ? "high" : "auto"}
                                             decoding="async"
                                             onError={(e) => {
                                                 if (e.target.src.includes('localhost:5000')) {
@@ -252,64 +250,6 @@ const HomeMain = () => {
 
 
                 {/* Game Details Modal */}
-                {/* {selectedGame && (
-                    <div className={`modal fade glass-modal ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }} tabIndex="-1">
-                        <div className="modal-dialog modal-lg modal-dialog-centered">
-                            <div className="modal-content border-0">
-                                <div className="modal-header border-0 pb-0">
-                                    <h5 className="modal-title fw-bold">{selectedGame.gameName}</h5>
-                                    <button type="button" className="btn-close btn-close-white" onClick={handleCloseModal}></button>
-                                </div>
-                                <div className="modal-body p-4">
-                                    {(() => {
-                                        const file = (selectedGame.iframs && selectedGame.iframs.length > 0 && selectedGame.iframs[0]) ||
-                                            selectedGame.gameUrl;
-
-                                        if (file) {
-                                            return (
-                                                <>
-                                                    <div className="ratio ratio-16x9 shadow-lg rounded-4 overflow-hidden mb-4">
-                                                        <iframe
-                                                            src={file}
-                                                            title={selectedGame.gameName}
-                                                            allowFullScreen
-                                                        ></iframe>
-                                                    </div>
-                                                    <div className="text-center mb-4">
-                                                        <a href={file} target="_blank" rel="noopener noreferrer" className="btn btn-gaming px-5 py-2">
-                                                            FULLSCREEN MODE <i className="bi bi-arrows-fullscreen ms-2"></i>
-                                                        </a>
-                                                    </div>
-                                                    {selectedGame.keyframes && selectedGame.keyframes.length > 0 && (
-                                                        <div className="mb-4">
-                                                            <h6 className="text-white-50 uppercase small fw-bold mb-3">GALLERY</h6>
-                                                            <div className="row g-2">
-                                                                {selectedGame.keyframes.map((frame, index) => (
-                                                                    <div key={index} className="col-4">
-                                                                        <img
-                                                                            src={`${API_URL}${frame}`}
-                                                                            alt="Preview"
-                                                                            className="img-fluid rounded-3 border border-secondary"
-                                                                        />
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    <div className="d-flex justify-content-between text-white-50 x-small">
-                                                        <span>RELEASED: {new Date(selectedGame.createdAt).toLocaleDateString()}</span>
-                                                        <span>VERSION: 1.0.4</span>
-                                                    </div>
-                                                </>
-                                            );
-                                        }
-                                        return <div className="alert bg-dark text-white border-secondary text-center">Data link corrupted. Contact admin.</div>;
-                                    })()}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )} */}
                 {selectedGame && (
                     <div className={`modal fade glass-modal ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }} tabIndex="-1">
                         <div className="modal-dialog modal-lg modal-dialog-centered">

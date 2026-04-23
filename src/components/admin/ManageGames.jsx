@@ -568,14 +568,6 @@ const ManageGames = () => {
                                                     <i className="bi bi-pencil-square me-2 text-primary"></i> Edit
                                                 </button>
                                             </li>
-                                            {/* <li>
-                                                <button
-                                                    className="dropdown-item py-2"
-                                                    onClick={() => { setViewingJson(game); setOpenDropdownId(null); }}
-                                                >
-                                                    <i className="bi bi-code-slash me-2 text-info"></i> Raw JSON
-                                                </button>
-                                            </li> */}
                                             <li><hr className="dropdown-divider" /></li>
                                             <li>
                                                 <button
@@ -683,14 +675,6 @@ const ManageGames = () => {
                                                                 <i className="bi bi-pencil-square me-2 text-primary"></i> Edit
                                                             </button>
                                                         </li>
-                                                        {/* <li>
-                                                        <button
-                                                            className="dropdown-item py-2"
-                                                            onClick={() => { setViewingJson(game); setOpenDropdownId(null); }}
-                                                        >
-                                                            <i className="bi bi-code-slash me-2 text-info"></i> Raw JSON
-                                                        </button>
-                                                    </li> */}
                                                         <li><hr className="dropdown-divider" /></li>
                                                         <li>
                                                             <button

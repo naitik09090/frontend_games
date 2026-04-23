@@ -98,33 +98,52 @@ const GamePlayer = () => {
         loadGame();
     }, [id]);
 
-    // Listen for admin updates to automatically refresh the MoreGamesGrid
+    // Listen for admin updates or perform a one-time background refresh on mount
     useEffect(() => {
-        const syncChannel = new (window.BroadcastChannel || class { postMessage(){}; onmessage(){}; close(){} })('gaming_sync');
+        const API_URL = 'https://backend-games-phi.vercel.app';
+        const syncChannel = new (window.BroadcastChannel || class { postMessage() { }; onmessage() { }; close() { } })('gaming_sync');
+
+        const refreshGamesData = async (isBackground = false) => {
+            try {
+                const r = await fetch(`${API_URL}/games?limit=100`);
+                if (!r.ok) return;
+                const data = await r.json();
+                const list = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
+                list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                _gamesCache = list.filter(g => g.status !== false);
+
+                // If it's a background refresh, update the state to show new games
+                if (isMounted.current) {
+                    const pool = _gamesCache.filter(g => g._id !== id);
+                    const shuffled = [...pool].sort(() => 0.5 - Math.random()).slice(0, 24);
+                    setAllGames(shuffled);
+                    if (!isBackground) setBottomReady(true);
+                }
+            } catch (e) {
+                console.warn("Background refresh failed:", e);
+            }
+        };
+
         syncChannel.onmessage = (event) => {
             if (event.data?.type === 'REFRESH_DATA') {
                 _gamesCache = null;
                 _gamesCacheFetch = null;
-                
-                // Silently refresh the games grid
-                fetch(`${API_URL}/games?limit=100`)
-                    .then(r => r.ok ? r.json() : null)
-                    .then(data => {
-                        if (!data) return;
-                        let list = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
-                        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                        _gamesCache = list.filter(g => g.status !== false);
-                        const pool = _gamesCache.filter(g => g._id !== id);
-                        // Maintain 24 item pool
-                        const shuffled = [...pool].sort(() => 0.5 - Math.random()).slice(0, 24);
-                        if (isMounted.current) setAllGames(shuffled);
-                    }).catch(() => {});
+                refreshGamesData(true);
             }
         };
+
+        // ONE-TIME AUTO REFRESH: Trigger a fresh fetch on mount to ensure latest data
+        // This runs after the initial loadGame() finishes using the cache
+        const timer = setTimeout(() => {
+            refreshGamesData(true);
+        }, 1500); // 1.5s delay to prioritize the main game iframe loading
+
         return () => {
+            clearTimeout(timer);
             if (syncChannel.close) syncChannel.close();
         };
-    }, [id, API_URL]);
+    }, [id]);
 
     // Safety timeout: if iframe doesn't load in 15s, show manual link
     useEffect(() => {

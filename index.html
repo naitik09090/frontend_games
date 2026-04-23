@@ -17,12 +17,18 @@
 
   <!-- ─── Critical inline CSS ───────────────────────────────────────────
          Paint the page background & baseline immediately — zero blocking.
-         Keeps the viewport from flashing white while the full bundle loads.
+         Eliminates render-blocking requests for index.css and GameLoader.css.
     ──────────────────────────────────────────────────────────────────────── -->
   <style>
     :root {
       --bs-body-bg: #0f0c29;
       --bs-body-color: #fff;
+      --theme-cyan: #00f2ff;
+      --theme-blue: #0088ff;
+      --loader-cyan: #00d2ff;
+      --loader-blue: #3a7bd5;
+      --loader-glow: rgba(0, 210, 255, 0.6);
+      --loader-bg: #0f0c29;
     }
 
     *,
@@ -41,6 +47,7 @@
       font-family: 'Outfit', 'Inter', system-ui, sans-serif;
       -ms-overflow-style: none;
       scrollbar-width: none;
+      -webkit-font-smoothing: antialiased;
     }
 
     body::-webkit-scrollbar {
@@ -51,38 +58,33 @@
       min-height: 100vh
     }
 
-    /* Skeleton loader so page looks alive before React hydrates */
+    /* Page Loader Skeleton (Rendered instantly) */
     #root:empty::after {
       content: '';
       display: block;
-      width: 40px;
-      height: 40px;
+      width: 60px;
+      height: 60px;
       position: absolute;
       top: 50%;
       left: 50%;
-      margin: -20px 0 0 -20px;
-      border: 3px solid rgba(0, 210, 255, .3);
-      border-top-color: #00d2ff;
+      margin: -30px 0 0 -30px;
+      border: 3px solid rgba(0, 210, 255, .15);
+      border-top-color: var(--loader-cyan);
       border-radius: 50%;
-      animation: _spin .75s linear infinite;
-    }
-
-    @keyframes _spin {
-      to {
-        transform: rotate(360deg)
-      }
+      animation: _spin .8s linear infinite;
+      z-index: 10001;
     }
 
     #root:empty::before {
-      content: 'SYSTEM INITIALIZING';
-      position: absolute;
-      top: 60%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: sans-serif;
-      font-size: 10px;
-      letter-spacing: 2px;
-      color: rgba(255, 255, 255, 0.3);
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: var(--loader-bg);
+      z-index: 10000;
+    }
+
+    @keyframes _spin {
+      to { transform: rotate(360deg); }
     }
 
     /* Bootstrap Icons font — font-display:swap prevents CLS from icon font swap */
@@ -109,68 +111,21 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
-    .bi-arrows-fullscreen::before {
-      content: "\f14d"
-    }
-
-    .bi-box-arrow-right::before {
-      content: "\f1c3"
-    }
-
-    .bi-chevron-left::before {
-      content: "\f284"
-    }
-
-    .bi-controller::before {
-      content: "\f2d4"
-    }
-
-    .bi-exclamation-triangle::before {
-      content: "\f33b"
-    }
-
-    .bi-fullscreen-exit::before {
-      content: "\f3de"
-    }
-
-    .bi-fullscreen::before {
-      content: "\f3df"
-    }
-
-    .bi-list::before {
-      content: "\f479"
-    }
-
-    .bi-pencil-square::before {
-      content: "\f4ca"
-    }
-
-    .bi-person-check-fill::before {
-      content: "\f4d5"
-    }
-
-    .bi-speedometer2::before {
-      content: "\f580"
-    }
-
-    .bi-three-dots-vertical::before {
-      content: "\f5d3"
-    }
-
-    .bi-trash::before {
-      content: "\f5de"
-    }
-
-    .bi-x-lg::before {
-      content: "\f659"
-    }
+    .bi-arrows-fullscreen::before { content: "\f14d" }
+    .bi-box-arrow-right::before { content: "\f1c3" }
+    .bi-chevron-left::before { content: "\f284" }
+    .bi-controller::before { content: "\f2d4" }
+    .bi-exclamation-triangle::before { content: "\f33b" }
+    .bi-fullscreen-exit::before { content: "\f3de" }
+    .bi-fullscreen::before { content: "\f3df" }
+    .bi-list::before { content: "\f479" }
+    .bi-pencil-square::before { content: "\f4ca" }
+    .bi-person-check-fill::before { content: "\f4d5" }
+    .bi-speedometer2::before { content: "\f580" }
+    .bi-three-dots-vertical::before { content: "\f5d3" }
+    .bi-trash::before { content: "\f5de" }
+    .bi-x-lg::before { content: "\f659" }
   </style>
-
-  <!-- Preconnects removed to satisfy Lighthouse "Unused preconnect" rule (fonts and icons are loaded locally) -->
-
-  <!-- Bootstrap CSS is now imported natively via main.jsx and purged through PostCSS during build! -->
-
-  <!-- Bootstrap Icons CSS is completely inlined above to eliminate render-blocking network requests -->
 </head>
 
 <body>
