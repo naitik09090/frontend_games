@@ -189,54 +189,6 @@
     }
 }
 
-/* ── Skeleton: single lightweight pulse (replaces 3 concurrent animations) ── */
-@keyframes skeletonPulse {
-
-    0%,
-    100% {
-        opacity: 0.4;
-    }
-
-    50% {
-        opacity: 0.8;
-    }
-}
-
-.skeleton-card {
-    border-radius: 12px;
-    overflow: hidden;
-    background: rgba(0, 210, 255, 0.06);
-    border: 1px solid rgba(0, 210, 255, 0.2);
-    /* Single composited animation (opacity only) — zero paint cost */
-    animation: skeletonPulse 1.6s ease-in-out infinite;
-    will-change: opacity;
-}
-
-.skeleton-img {
-    width: 100%;
-    padding-top: 100%;
-    background: rgba(0, 210, 255, 0.08);
-}
-
-.game-wrapper {
-    opacity: 0;
-    animation: cardReveal 0.45s ease forwards;
-    will-change: opacity, transform;
-}
-
-
-@keyframes cardReveal {
-    from {
-        opacity: 0;
-        transform: translateY(14px) scale(0.97);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
 /* Hero section simple fade-in (replaces heavy animate.css library call) */
 .hero-section {
     animation: heroFade 0.5s ease forwards;

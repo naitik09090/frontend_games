@@ -4,12 +4,12 @@ import './MoreGamesGrid.css';
 
 const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUrl }) => {
     // Falls back to the prop if provided, otherwise uses the hardcoded default
-    const isLocal = window.location.hostname === 'localhost' || 
-                    window.location.hostname.startsWith('192.168.') ||
-                    window.location.hostname.startsWith('10.');
-                    
-    const backendHost = (isLocal && window.location.hostname !== 'localhost') ? window.location.hostname : 'localhost';
-    const DEFAULT_REMOTE = isLocal ? `http://${backendHost}:5000` : 'https://backend-games-phi.vercel.app';
+    // const isLocal = window.location.hostname === 'localhost' || 
+    //                 window.location.hostname.startsWith('192.168.') ||
+    //                 window.location.hostname.startsWith('10.');
+
+    // const backendHost = (isLocal && window.location.hostname !== 'localhost') ? window.location.hostname : 'localhost';
+    const DEFAULT_REMOTE = 'https://backend-games-phi.vercel.app';
     const REMOTE_URL = propRemoteUrl || DEFAULT_REMOTE;
 
     // Tells the browser the exact layout size so it picks the perfect w-descriptor
@@ -18,21 +18,24 @@ const MoreGamesGrid = ({ games, onCardClick, currentId, REMOTE_URL: propRemoteUr
 
     const getLogoSrc = (g, size = 185) => {
         if (!g) return '';
+        const globalVersion = localStorage.getItem('globalGameUpdateVersion');
+        const timeParam = globalVersion ? `&v=${globalVersion}` : '';
+
         if (g.gameLogo) {
             if (g.gameLogo.startsWith('data:')) return g.gameLogo;
             if (g.gameLogo.startsWith('http')) return g.gameLogo;
 
             const path = g.gameLogo.startsWith('/') ? g.gameLogo : `/${g.gameLogo}`;
-            return `${REMOTE_URL}${path}`;
+            return `${REMOTE_URL}${path}?w=${size}&q=35${timeParam}`;
         }
         // Lowering quality to 35 for better Lighthouse performance (was 50)
-        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=35`;
+        return `${REMOTE_URL}/games/${g._id}/logo?w=${size}&q=35${timeParam}`;
     };
 
     const getLogoSrcSet = (g) => {
         // If it's a static local asset, we don't have multiple sizes on the backend yet
-        if (g.gameLogo) return undefined; 
-        
+        if (g.gameLogo) return undefined;
+
         // Comprehensive sizes for all screen densities
         return `${getLogoSrc(g, 120)} 120w, ${getLogoSrc(g, 185)} 185w, ${getLogoSrc(g, 240)} 240w, ${getLogoSrc(g, 330)} 330w, ${getLogoSrc(g, 400)} 400w`;
     };

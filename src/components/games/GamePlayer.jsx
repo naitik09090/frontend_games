@@ -1,10 +1,14 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import './GamePlayer.css';
 
 // Lazy load the 'More Adventures' grid to reduce initial JS payload for the main game player.
 const MoreGamesGrid = lazy(() => import('./MoreGamesGrid.jsx'));
-const GameLoader = lazy(() => import('./GameLoader.jsx'));
+import GameLoader from './GameLoader.jsx';
+
+// ── Module-level cache: games list is fetched ONCE per session ──────────────
+let _gamesCache = null;      // cached array
+let _gamesCacheFetch = null; // in-flight promise (prevents duplicate requests)
 
 const GamePlayer = () => {
     const { id } = useParams();
@@ -26,10 +30,18 @@ const GamePlayer = () => {
     const REMOTE_URL = 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
 
+    // Track whether component is still mounted to avoid state-after-unmount warnings
+    const isMounted = useRef(true);
+    useEffect(() => {
+        isMounted.current = true;
+        return () => { isMounted.current = false; };
+    }, []);
+
     useEffect(() => {
         if (!id) return;
 
-        const loadGameAndRelated = async () => {
+        const loadGame = async () => {
+            if (!isMounted.current) return;
             setLoading(true);
             setIframeLoaded(false);
             setIsTimedOut(false);
@@ -37,95 +49,103 @@ const GamePlayer = () => {
             setError(null);
 
             try {
-                // 1. Fetch current game details from API if not already in state
+                // ── 1. Current game (use navigation state if available — instant) ──
                 let currentGame = game && game._id === id ? game : null;
-
                 if (!currentGame) {
-                    const response = await fetch(`${API_URL}/games/${id}`);
-                    if (!response.ok) throw new Error('Game not found');
-                    currentGame = await response.json();
-                    setGame(currentGame);
+                    const res = await fetch(`${API_URL}/games/${id}`);
+                    if (!res.ok) throw new Error('Game not found');
+                    currentGame = await res.json();
+                    if (isMounted.current) setGame(currentGame);
                 }
 
-                // 2. Fetch related games from API (Limited to 100 to optimize payload size)
-                let related = [];
-                try {
-                    const response = await fetch(`${API_URL}/games?limit=100`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        let fetchedGames = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
-
-                        // Sort by createdAt descending to ensure newest games are prioritized
-                        fetchedGames.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-                        // Take the newest 50 games for the related pool
-                        const newestGames = fetchedGames.filter(g => g._id !== id && g.status !== false).slice(0, 50);
-                        related = newestGames;
+                // ── 2. Related games list — use cache if already fetched ──────────
+                if (!_gamesCache) {
+                    // Deduplicate concurrent fetches with a shared promise
+                    if (!_gamesCacheFetch) {
+                        _gamesCacheFetch = fetch(`${API_URL}/games?limit=100`)
+                            .then(r => r.ok ? r.json() : null)
+                            .then(data => {
+                                if (!data) return [];
+                                let list = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
+                                list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                                _gamesCache = list.filter(g => g.status !== false);
+                                _gamesCacheFetch = null;
+                                return _gamesCache;
+                            })
+                            .catch(() => { _gamesCacheFetch = null; return []; });
                     }
-                } catch (e) { console.warn("API related games fetch failed"); }
+                    await _gamesCacheFetch;
+                }
 
-                // Shuffled subset
-                const shuffled = [...related].sort(() => 0.5 - Math.random());
-                setAllGames(shuffled.slice(0, 24));
+                const pool = (_gamesCache || []).filter(g => g._id !== id);
+                const shuffled = [...pool].sort(() => 0.5 - Math.random()).slice(0, 24);
 
-                setBottomReady(true);
-                setLoading(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (isMounted.current) {
+                    setAllGames(shuffled);
+                    setBottomReady(true);
+                    setLoading(false);
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                }
             } catch (err) {
-                console.error("Error loading game player data:", err);
-                setError(err.message);
-                setLoading(false);
+                console.error("GamePlayer load error:", err);
+                if (isMounted.current) {
+                    setError(err.message);
+                    setLoading(false);
+                }
             }
         };
 
-        loadGameAndRelated();
-
-        // Tab Sync & Auto-Refresh - updates related games when a new game is added in another tab
-        const syncChannel = new (window.BroadcastChannel || class { postMessage() { }; onmessage() { }; close() { } })('gaming_sync');
-        syncChannel.onmessage = (event) => {
-            if (event.data?.type === 'REFRESH_DATA') {
-                loadGameAndRelated();
-            }
-        };
-
-        const handleFocus = () => {
-            loadGameAndRelated();
-        };
-        window.addEventListener('focus', handleFocus);
-
-        return () => {
-            window.removeEventListener('focus', handleFocus);
-            if (syncChannel.close) syncChannel.close();
-        };
+        loadGame();
     }, [id]);
 
-    // Safety timeout: if iframe doesn't load in 12s, show manual link
+    // Listen for admin updates to automatically refresh the MoreGamesGrid
+    useEffect(() => {
+        const syncChannel = new (window.BroadcastChannel || class { postMessage(){}; onmessage(){}; close(){} })('gaming_sync');
+        syncChannel.onmessage = (event) => {
+            if (event.data?.type === 'REFRESH_DATA') {
+                _gamesCache = null;
+                _gamesCacheFetch = null;
+                
+                // Silently refresh the games grid
+                fetch(`${API_URL}/games?limit=100`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(data => {
+                        if (!data) return;
+                        let list = Array.isArray(data.games) ? data.games : (Array.isArray(data) ? data : []);
+                        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        _gamesCache = list.filter(g => g.status !== false);
+                        const pool = _gamesCache.filter(g => g._id !== id);
+                        // Maintain 24 item pool
+                        const shuffled = [...pool].sort(() => 0.5 - Math.random()).slice(0, 24);
+                        if (isMounted.current) setAllGames(shuffled);
+                    }).catch(() => {});
+            }
+        };
+        return () => {
+            if (syncChannel.close) syncChannel.close();
+        };
+    }, [id, API_URL]);
+
+    // Safety timeout: if iframe doesn't load in 15s, show manual link
     useEffect(() => {
         let timer;
         if (!iframeLoaded && !loading && game) {
-            timer = setTimeout(() => {
-                setIsTimedOut(true);
-            }, 12000);
+            timer = setTimeout(() => { setIsTimedOut(true); }, 15000);
         }
         return () => clearTimeout(timer);
     }, [iframeLoaded, loading, game, id]);
 
     const handleCardClick = (clickedGame) => {
-        // Optimistically set the game to show it immediately
+        setLoading(true); // Ensure loader shows immediately during transition
         setGame(clickedGame);
-        // Reset state for new game
         setIframeLoaded(false);
         setIsTimedOut(false);
         setIsFullscreen(false);
-
-        // Navigate with state so the component sees the new data immediately
         navigate(`/game/${clickedGame._id}`, { state: { gameData: clickedGame } });
-
-        // Instant scroll to top
         window.scrollTo({ top: 0, behavior: 'instant' });
     };
 
-    // Effect to lock body scroll when in fullscreen or landscape (mobile)
+    // Lock body scroll in fullscreen / landscape
     useEffect(() => {
         const handleResize = () => {
             const isLandscape = window.matchMedia("(max-width: 1024px) and (orientation: landscape)").matches;
@@ -137,9 +157,7 @@ const GamePlayer = () => {
                 document.documentElement.style.overflow = "";
             }
         };
-
         handleResize();
-
         window.addEventListener('resize', handleResize);
         return () => {
             window.removeEventListener('resize', handleResize);
@@ -150,7 +168,6 @@ const GamePlayer = () => {
 
     const getIframeSrc = () => {
         if (!game) return null;
-
         let url = null;
         if (Array.isArray(game.iframs) && game.iframs.length > 0) {
             url = game.iframs[0];
@@ -161,136 +178,115 @@ const GamePlayer = () => {
         } else if (game.iframe && typeof game.iframe === 'string' && game.iframe.trim() !== '') {
             url = game.iframe;
         }
-
         if (url && (url.includes('localhost') || url.includes('127.0.0.1'))) {
             const isLocal = window.location.hostname !== 'localhost';
             if (isLocal) {
                 url = url.replace('localhost', window.location.hostname).replace('127.0.0.1', window.location.hostname);
             }
         }
-
         return url;
     };
 
     const iframeSrc = getIframeSrc();
     const showLoader = (loading && !game) || !iframeLoaded;
 
+    // Fullscreen: toggled via CSS class — iframe stays mounted so game doesn't restart
+
+    // ─── Layout (fullscreen toggled via CSS so game never restarts) ──────────
     return (
-        <div className="game-player-gaming-wrapper">
-            <div className={`container-fluid p-0 ${isFullscreen ? 'd-flex flex-column h-100' : ''}`}>
-                {!isFullscreen && (
-                    <div className="container py-4 position-relative">
-                        <div className="d-flex justify-content-start align-items-center">
-                            <Link to="/" className="btn-gaming-back mb-0">
-                                <i className="bi bi-chevron-left me-2"></i> RETURN TO BASE
-                            </Link>
-                        </div>
-                    </div>
-                )}
+        <div className={`gp-wrapper${isFullscreen ? ' gp-wrapper--fullscreen' : ''}`}>
 
-                <div className={`fullscreen-arena mb-5 ${isFullscreen ? 'm-0 p-0 h-100' : ''}`}>
-                    <div
-                        className={`iframe-container mobile-game-container ratio ratio-16x9 ${isFullscreen ? 'fullscreen-mode' : ''}`}
-                        style={{
-                            border: isFullscreen ? 'none' : 'none',
-                            maxWidth: isFullscreen ? '100%' : '1200px',
-                            margin: '0 auto',
-                            position: 'relative'
-                        }}
-                    >
-                        {(showLoader || isTimedOut) && (
-                            <Suspense fallback={null}>
-                                <div className="position-absolute inset-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" style={{ zIndex: 10, background: '#0f0c29' }}>
-                                    {!isTimedOut ? (
-                                        <GameLoader />
-                                    ) : (
-                                        <div className="text-center p-4">
-                                            <i className="bi bi-wifi-off fs-1 text-warning mb-3"></i>
-                                            <p className="text-white fw-bold mb-1">SIGNAL WEAK</p>
-                                            <p className="text-white-50 small mb-4">Taking longer than expected... source might be restricted.</p>
-                                            <div className="d-flex gap-2 justify-content-center">
-                                                <button className="btn btn-sm btn-outline-info" onClick={() => window.location.reload()}>RETRY</button>
-                                                <a href={iframeSrc} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-info">OPEN IN NEW TAB</a>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </Suspense>
-                        )}
-                        {iframeSrc ? (
-                            <>
-                                <iframe
-                                    key={game?._id || id}
-                                    src={iframeSrc}
-                                    title={game?.gameName || 'Game Player'}
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowFullScreen
-                                    scrolling="no"
-                                    style={{
-                                        border: isFullscreen ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                                        width: '100%',
-                                        height: '100%',
-                                        overflow: 'hidden'
-                                    }}
-                                    onLoad={() => setIframeLoaded(true)}
-                                    className={`${isFullscreen ? '' : 'rounded-3 shadow-lg'} ${iframeLoaded ? 'opacity-100' : 'opacity-0'}`}
-                                ></iframe>
+            {/* ── Top bar: Back button ── */}
+            <div className="gp-topbar">
+                <Link to="/" className="gp-back-btn">
+                    <i className="bi bi-chevron-left"></i> RETURN TO BASE
+                </Link>
+            </div>
 
-                                <button
-                                    className="fullscreen-btn d-md-none"
-                                    onClick={() => setIsFullscreen(!isFullscreen)}
-                                    title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-                                >
-                                    <i className={`bi ${isFullscreen ? 'bi-fullscreen-exit' : 'bi-fullscreen'}`}></i>
-                                </button>
-                            </>
-                        ) : (
-                            <div className="d-flex flex-column align-items-center justify-content-center text-white-50 h-100">
-                                <i className="bi bi-exclamation-triangle fs-1 mb-3"></i>
-                                <p className="fw-bold">SIGNAL LOST: No playable source found</p>
-                                {error && <p className="small mt-2 text-danger">{error}</p>}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className={`container bottom-section${bottomReady ? ' ready' : ''}`}>
-                    <div className="d-flex align-items-center py-5">
-                        <div className="flex-grow-1 border-bottom border-secondary opacity-25"></div>
-                        <h3 className="mx-0 text-white-50 small fw-bold tracking-widest" style={{ letterSpacing: '4px' }}>
-                            MORE ADVENTURES
-                        </h3>
-                        <div className="flex-grow-1 border-bottom border-secondary opacity-25"></div>
-                    </div>
-
-                    {!bottomReady ? (
-                        /* Neon gaming skeleton */
-                        <div className="games-grid">
-                            {[...Array(12)].map((_, i) => (
-                                <div key={i} className="skeleton-card">
-                                    <div className="skeleton-img"></div>
-                                </div>
-                            ))}
-                        </div>
+            {/* ── iframe zone ── */}
+            <div className="gp-iframe-zone">
+                {/* Loader overlay */}
+                <div className={`gp-loader-overlay ${(showLoader || isTimedOut) ? '' : 'gp-loader-overlay--hidden'}`}>
+                    {!isTimedOut ? (
+                        <GameLoader />
                     ) : (
-                        <Suspense fallback={
-                            <div className="games-grid">
-                                {[...Array(6)].map((_, i) => (
-                                    <div key={i} className="skeleton-card">
-                                        <div className="skeleton-img"></div>
-                                    </div>
-                                ))}
+                        <div className="text-center p-4">
+                            <i className="bi bi-wifi-off fs-1 text-warning mb-3 d-block"></i>
+                            <p className="text-white fw-bold mb-1">SIGNAL WEAK</p>
+                            <p className="text-white-50 small mb-4">
+                                Taking longer than expected… source might be restricted.
+                            </p>
+                            <div className="d-flex gap-2 justify-content-center">
+                                <button className="btn btn-sm btn-outline-info" onClick={() => window.location.reload()}>
+                                    RETRY
+                                </button>
+                                {iframeSrc && (
+                                    <a href={iframeSrc} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-info">
+                                        OPEN IN NEW TAB
+                                    </a>
+                                )}
                             </div>
-                        }>
-                            <MoreGamesGrid
-                                games={allGames}
-                                onCardClick={handleCardClick}
-                                currentId={id}
-                                REMOTE_URL={REMOTE_URL}
-                            />
-                        </Suspense>
+                        </div>
                     )}
                 </div>
+
+                {/* Iframe or no-source error */}
+                {iframeSrc ? (
+                    <>
+                        <iframe
+                            key={game?._id || id}
+                            src={iframeSrc}
+                            title={game?.gameName || 'Game Player'}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            scrolling="no"
+                            className={`gp-iframe ${iframeLoaded ? 'gp-iframe--visible' : ''}`}
+                            onLoad={() => setIframeLoaded(true)}
+                        />
+                        {/* Fullscreen toggle button (mobile) */}
+                        <button
+                            className="gp-fs-btn d-md-none"
+                            onClick={() => setIsFullscreen(f => !f)}
+                            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                        >
+                            <i className={`bi ${isFullscreen ? 'bi-fullscreen-exit' : 'bi-fullscreen'}`}></i>
+                        </button>
+                    </>
+                ) : (
+                    <div className="gp-no-source">
+                        <i className="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                        <p className="fw-bold">SIGNAL LOST: No playable source found</p>
+                        {error && <p className="small mt-2 text-danger">{error}</p>}
+                    </div>
+                )}
+            </div>
+
+            {/* ── More Adventures ── */}
+            <div className="gp-more-section">
+                <div className="gp-more-header">
+                    <span className="gp-more-line"></span>
+                    <h3 className="gp-more-title">MORE ADVENTURES</h3>
+                    <span className="gp-more-line"></span>
+                </div>
+
+                {!bottomReady ? (
+                    <div className="py-5">
+                        <GameLoader type="inline" />
+                    </div>
+                ) : (
+                    <Suspense fallback={
+                        <div className="py-5">
+                            <GameLoader type="inline" />
+                        </div>
+                    }>
+                        <MoreGamesGrid
+                            games={allGames}
+                            onCardClick={handleCardClick}
+                            currentId={id}
+                            REMOTE_URL={REMOTE_URL}
+                        />
+                    </Suspense>
+                )}
             </div>
         </div>
     );

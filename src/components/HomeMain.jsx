@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import GameLoader from './games/GameLoader';
+import Navbar from './layout/Navbar';
 import './HomeMain.css';
+import { useEffect, useRef, useState } from 'react';
 // import stickmanLogo from '../assets/stickman.jpg';
 
 // Bump this version whenever the API response shape changes (e.g. fields removed).
@@ -11,7 +13,6 @@ const GAMES_CACHE_VERSION = 'v2'; // v2 = gameLogo stripped from list response
 // We now fetch it on-demand only as a fallback.
 
 const HomeMain = () => {
-    const [localGames, setLocalGames] = useState([]);
 
     // Initialize from cache for "Instant Load"
     const [games, setGames] = useState(() => {
@@ -26,7 +27,6 @@ const HomeMain = () => {
     });
     const [loading, setLoading] = useState(false); // No initial loading for local data
     const [loadingMore, setLoadingMore] = useState(false);
-    const [error, setError] = useState(null);
     const [selectedGame, setSelectedGame] = useState(null);
     const [showModal, setShowModal] = useState(false);
 
@@ -36,40 +36,27 @@ const HomeMain = () => {
     const loadingRef = useRef(false);
     const navigate = useNavigate();
 
-    const userJson = localStorage.getItem('user');
-    const user = userJson ? JSON.parse(userJson) : null;
-
-    const handleLogout = () => {
-        if (window.confirm('Are you sure you want to logout?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.reload();
-        }
-    };
 
     // Automatically switch between local and remote backend
-    const isLocal = window.location.hostname === 'localhost' ||
-        window.location.hostname.startsWith('192.168.') ||
-        window.location.hostname.startsWith('172.') ||
-        window.location.hostname.startsWith('10.');
 
-    // On local network (like testing on tablet), the backend is at the same IP as the frontend
-    const backendHost = (isLocal && window.location.hostname !== 'localhost') ? window.location.hostname : 'localhost';
-    const REMOTE_URL = isLocal ? `http://${backendHost}:5000` : 'https://backend-games-phi.vercel.app';
+    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
 
     // Returns a URL to serve the game's logo, preferring the JSON path if available.
     const getLogoSrc = (game, size = 185) => {
         if (!game) return '';
+        const globalVersion = localStorage.getItem('globalGameUpdateVersion');
+        const timeParam = globalVersion ? `&v=${globalVersion}` : '';
+
         if (game.gameLogo) {
             if (game.gameLogo.startsWith('data:')) return game.gameLogo;
             if (game.gameLogo.startsWith('http')) return game.gameLogo;
 
             const path = game.gameLogo.startsWith('/') ? game.gameLogo : `/${game.gameLogo}`;
-            return `${REMOTE_URL}${path}`;
+            return `${REMOTE_URL}${path}?w=${size}&q=35${timeParam}`;
         }
         // Lowered quality to q=35 (from 50) to aggressively satisfy Lighthouse compression audits
-        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=35`;
+        return `${REMOTE_URL}/games/${game._id}/logo?w=${size}&q=35${timeParam}`;
     };
 
     const getLogoSrcSet = (game) => {
@@ -122,7 +109,7 @@ const HomeMain = () => {
             console.warn('⚠️ API fetch failed, falling back to local JSON data:', err.message);
             // Fallback for page 1
             // Fallback for page 1: Fetch local JSON only when needed
-            setError(err.message);
+            console.log(err.message);
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -192,15 +179,7 @@ const HomeMain = () => {
 
     return (
         <div className="home-gaming-wrapper">
-            {/* Navbar */}
-            <nav className="navbar navbar-expand-lg navbar-dark glass-nav sticky-top">
-                <div className="container-fluid">
-                    <a className="navbar-brand d-flex align-items-center" href="/" aria-label="Games Hub Home">
-                        <i className="bi bi-controller me-2 fs-3" aria-hidden="true"></i>
-                        GAMES
-                    </a>
-                </div>
-            </nav>
+            <Navbar />
 
             <div className="container py-5">
                 {/* Hero Section */}
@@ -212,17 +191,13 @@ const HomeMain = () => {
                 {/* Games Grid */}
                 <div className="games-grid">
                     {showSkeletons ? (
-                        /* Show skeletons on first-ever load */
-                        [...Array(12)].map((_, i) => (
-                            <div key={`skel-${i}`} className="game-wrapper">
-                                <div className="skeleton-card" style={{ borderRadius: '10px' }}>
-                                    <div className="skeleton-img"></div>
-                                </div>
-                            </div>
-                        ))
+                        <div className="grid-column-full py-5">
+                            <GameLoader type="inline" />
+                        </div>
                     ) : games.filter(game => game.status !== false).length === 0 ? (
                         <div className="text-center py-5 w-100 grid-column-full">
-                            <p className="text-white-50">No games available at the moment.</p>
+                            <i className="bi bi-ghost fs-1 text-white-50 d-block mb-3"></i>
+                            <p className="text-white-50 fw-bold">NO GAMES DETECTED</p>
                         </div>
                     ) : (
                         games.filter(game => game.status !== false).map((game, index) => (
@@ -270,10 +245,8 @@ const HomeMain = () => {
 
                 {/* Loading More Spinner */}
                 {loadingMore && (
-                    <div className="text-center py-4">
-                        <div className="spinner-border text-info" role="status">
-                            <span className="visually-hidden">Loading more...</span>
-                        </div>
+                    <div className="text-center py-5">
+                        <GameLoader type="minimal" />
                     </div>
                 )}
 

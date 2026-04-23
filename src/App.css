@@ -17,3 +17,110 @@
     user-select: none;
     -webkit-user-select: none;
 }
+
+/* --- Global Premium Navbar Styles --- */
+.glass-nav {
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 210, 255, 0.25);
+    padding: 12px 30px !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: -0.5px;
+    background: linear-gradient(to right, #00d2ff, #3a7bd5);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 5px rgba(0, 210, 255, 0.3));
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    filter: drop-shadow(0 0 8px rgba(0, 210, 255, 0.6));
+    transform: scale(1.02);
+}
+
+.btn-outline-info {
+    border-color: rgba(0, 210, 255, 0.5);
+    color: #00d2ff;
+    background: transparent;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-outline-info:hover {
+    background: #00d2ff;
+    color: #000;
+    border-color: #00d2ff;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.btn-info {
+    background: #00d2ff;
+    color: #000;
+    border: none;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+}
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .glass-nav {
+        padding: 8px 15px !important;
+    }
+
+    .navbar-brand {
+        font-size: 1.25rem !important;
+    }
+
+    .navbar-brand i {
+        font-size: 1.5rem !important;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.75rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .container-fluid {
+        padding-left: 5px;
+        padding-right: 5px;
+        display: flex;
+        flex-wrap: nowrap;
+        /* Prevent stacking */
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ms-auto {
+        margin-left: initial !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-brand {
+        font-size: 1.1rem !important;
+    }
+
+    .navbar-brand i {
+        display: none;
+        /* Hide icon on tiny screens to save space */
+    }
+
+    .btn-sm i {
+        margin-right: 4px !important;
+    }
+
+    .glass-nav {
+        padding: 6px 10px !important;
+    }
+}

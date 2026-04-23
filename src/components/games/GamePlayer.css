@@ -1,20 +1,27 @@
-.game-player-gaming-wrapper {
-    min-height: 100vh;
+/* ════════════════════════════════════════════════════
+   GamePlayer.css  –  Mobile-first layout
+   ════════════════════════════════════════════════════ */
+
+/* ── Page wrapper ─────────────────────────────────── */
+.gp-wrapper {
+    min-height: 100dvh;
     background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
     font-family: 'Outfit', 'Inter', sans-serif;
     color: white;
-    position: relative;
-    isolation: isolate;
+    display: flex;
+    flex-direction: column;
 }
 
-.game-player-gaming-wrapper::before {
+/* Ambient glow background */
+.gp-wrapper::before {
     content: '';
     position: fixed;
     inset: 0;
-    background: radial-gradient(ellipse 80% 60% at 20% 40%, rgba(0, 210, 255, 0.07) 0%, transparent 70%),
+    background:
+        radial-gradient(ellipse 80% 60% at 20% 40%, rgba(0, 210, 255, 0.07) 0%, transparent 70%),
         radial-gradient(ellipse 60% 80% at 80% 60%, rgba(58, 123, 213, 0.07) 0%, transparent 70%);
     pointer-events: none;
-    z-index: -1;
+    z-index: 0;
     animation: ambientShift 20s ease-in-out infinite alternate;
     will-change: opacity;
 }
@@ -29,258 +36,164 @@
     }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.ratio-16x9 {
-    max-width: 1200px;
-    margin: 0 auto;
-    border: none !important;
-}
-
-/* --- Games Grid --- */
-/* --- Games Grid Layout --- */
-/* Grid container is kept here to maintain skeleton layout during loading */
-.games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 30px;
-    padding: 0 0 50px;
-}
-
-@media (max-width: 768px) {
-    .games-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 15px;
-    }
-}
-
-.gaming-title {
-    font-weight: 800;
-    background: linear-gradient(to right, #00d2ff, #3a7bd5);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-transform: uppercase;
-}
-
-.btn-gaming-back {
-    display: inline-flex;
-    align-items: center;
-    color: rgba(255, 255, 255, 0.7);
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    margin-bottom: 20px;
-}
-
-.btn-gaming-back:hover {
-    color: #00d2ff;
-    transform: translateX(-5px);
-}
-
-/* Automatic Fullscreen on Mobile/Tablet Landscape */
-@media (max-width: 1024px) and (orientation: landscape) {
-
-    .container.pt-3,
-    .container.py-5,
-    .btn-gaming-back,
-    .gaming-title {
-        display: none !important;
-    }
-
-    .fullscreen-arena {
-        position: fixed !important;
-        top: 0;
-        left: 0;
-        width: 100vw !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        z-index: 9999;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: black;
-        touch-action: none;
-        overscroll-behavior: none;
-    }
-
-    .iframe-container {
-        width: 100% !important;
-        height: 100% !important;
-        max-width: none !important;
-        border-radius: 10px !important;
-        border: none !important;
-    }
-
-    .iframe-container::before {
-        display: none !important;
-        padding-top: 0 !important;
-    }
-
-    .fullscreen-btn {
-        display: none !important;
-    }
-
-    .game-player-gaming-wrapper {
-        overflow: hidden;
-        height: 100vh;
-        position: fixed;
-        width: 100%;
-    }
-}
-
-/* Mobile portrait */
-@media (max-width: 576px) and (orientation: portrait) {
-    .container {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-
-    .gaming-title {
-        font-size: 1rem;
-    }
-
-    .container.pt-3.pb-2 {
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-    }
-
-    .btn-gaming-back {
-        margin-bottom: 0 !important;
-        font-size: 0.8rem;
-    }
-
-    .mobile-game-container {
-        height: calc(100dvh - 60px) !important;
-        padding-top: 0 !important;
-        margin-bottom: 0 !important;
-        border-radius: 10px !important;
-        border-bottom-left-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-        touch-action: none;
-    }
-
-    .fullscreen-arena {
-        margin-bottom: 0 !important;
-    }
-
-    .fullscreen-mode {
-        position: fixed !important;
-        top: 0;
-        left: 0;
-        width: 100% !important;
-        height: 100% !important;
-        height: 100dvh !important;
-        z-index: 9999;
-        background: black;
-        border-radius: 10px !important;
-        touch-action: none;
-        overscroll-behavior: none;
-    }
-}
-
-/* Tablet portrait */
-@media (min-width: 577px) and (max-width: 1024px) and (orientation: portrait) {
-    .mobile-game-container {
-        height: calc(100dvh - 70px) !important;
-        padding-top: 0 !important;
-        margin-bottom: 0 !important;
-        border-radius: 12px !important;
-        border-bottom-left-radius: 0 !important;
-        border-bottom-right-radius: 0 !important;
-        touch-action: none;
-    }
-
-    .fullscreen-arena {
-        margin-bottom: 0 !important;
-    }
-
-    .btn-gaming-back {
-        margin-bottom: 0 !important;
-        font-size: 0.9rem;
-    }
-
-    .fullscreen-mode {
-        position: fixed !important;
-        top: 0;
-        left: 0;
-        width: 100% !important;
-        height: 100dvh !important;
-        z-index: 9999;
-        background: black;
-        border-radius: 0 !important;
-        touch-action: none;
-        overscroll-behavior: none;
-    }
-}
-
-/* Fullscreen button */
-.fullscreen-btn {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    z-index: 50;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(5px);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+/* ── Top bar (back button) ────────────────────────── */
+.gp-topbar {
+    position: relative;
+    z-index: 10;
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
+    padding: 10px 16px;
+    margin-bottom: 30px;
+    background: transparent;
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    /* never shrinks — always visible */
+    min-height: 48px;
 }
 
-.fullscreen-btn:hover {
-    background: #00d2ff;
-    color: black;
+.gp-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    transition: color 0.25s ease, transform 0.25s ease;
 }
 
-/* Bottom section */
-.bottom-section {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
+.gp-back-btn:hover {
+    color: #00d2ff;
+    transform: translateX(-3px);
 }
 
-/* ── Lightweight performance-optimized skeleton ── */
-@keyframes skeletonPulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
-}
+/* ── iframe zone ──────────────────────────────────── */
+.gp-iframe-zone {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    background: #000;
 
-.skeleton-card {
-    border-radius: 12px;
+    /* Mobile portrait: fill all space left after top-bar (48px) */
+    height: calc(100dvh - 48px);
+    width: 100%;
     overflow: hidden;
-    background: rgba(0, 210, 255, 0.06);
-    border: 1px solid rgba(0, 210, 255, 0.2);
-    /* Lightweight pulse animation - low CPU cost */
-    animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+
+/* Loader overlay sits on top of the iframe */
+.gp-loader-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: #0f0c29;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s;
     will-change: opacity;
 }
 
-.skeleton-img {
-    width: 100%;
-    padding-top: 100%;
-    background: rgba(0, 210, 255, 0.08);
+.gp-loader-overlay--hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
-.skeleton-footer {
-    padding: 12px;
+/* The iframe itself */
+.gp-iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    opacity: 0;
+    /* Faster ease-out for immediate impact once loaded */
+    transition: opacity 0.25s ease-out;
+}
+
+.gp-iframe--visible {
+    opacity: 1;
+}
+
+/* "No source" error state */
+.gp-no-source {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    padding: 24px;
+}
+
+/* Fullscreen enter button (mobile only, shown by d-md-none) */
+.gp-fs-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(6px);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.25s, color 0.25s;
+    cursor: pointer;
+}
+
+.gp-fs-btn:hover {
+    background: #00d2ff;
+    color: #000;
+}
+
+/* ── More Adventures section ──────────────────────── */
+.gp-more-section {
+    position: relative;
+    z-index: 1;
+    padding: 0 16px 60px;
+    flex: 1;
+}
+
+.gp-more-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 28px 0 20px;
+}
+
+.gp-more-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.gp-more-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    margin: 0;
+}
+
+/* ── Game grid (used by both skeleton & MoreGamesGrid) ── */
+/* ── Grid Layout ────────────────────────────────────── */
+.gp-grid,
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 cols on mobile */
+    gap: 12px;
+    padding-bottom: 20px;
 }
 
 .skeleton-bar {
@@ -292,4 +205,158 @@
 
 .skeleton-bar.short {
     width: 50%;
+}
+
+/* ── CSS-class fullscreen (iframe stays mounted, game never restarts) ─── */
+.gp-wrapper--fullscreen .gp-topbar,
+.gp-wrapper--fullscreen .gp-more-section {
+    display: none !important;
+}
+
+.gp-wrapper--fullscreen .gp-iframe-zone {
+    position: fixed !important;
+    inset: 0 !important;
+    height: 100dvh !important;
+    width: 100vw !important;
+    z-index: 9999;
+    border-radius: 0 !important;
+}
+
+.gp-wrapper--fullscreen .gp-fs-btn {
+    top: 12px;
+    left: 12px;
+    z-index: 10000;
+}
+
+/* ── Manual fullscreen overlay (kept for back-compat, not used now) ─── */
+.gp-fullscreen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+}
+
+.gp-fs-exit-btn {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(6px);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.25s;
+}
+
+.gp-fs-exit-btn:hover {
+    background: #00d2ff;
+    color: #000;
+}
+
+
+/* ════════════════════════
+   Tablet portrait (577–1024px)
+   ════════════════════════ */
+@media (min-width: 577px) and (max-width: 1024px) and (orientation: portrait) {
+    .gp-iframe-zone {
+        height: calc(100dvh - 52px);
+    }
+
+    .gp-grid,
+    .games-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .gp-more-section {
+        padding: 0 20px 60px;
+    }
+}
+
+/* ════════════════════════
+   Landscape (auto-fullscreen)
+   ════════════════════════ */
+@media (max-width: 1024px) and (orientation: landscape) {
+    .gp-topbar {
+        display: none !important;
+    }
+
+    .gp-iframe-zone {
+        height: 100dvh;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+    }
+
+    .gp-more-section {
+        display: none;
+    }
+}
+
+/* ════════════════════════
+   Desktop (≥ 1025px)
+   ════════════════════════ */
+@media (min-width: 1025px) {
+    .gp-wrapper {
+        /* Back to normal scrollable page */
+        display: block;
+    }
+
+    .gp-topbar {
+        padding: 14px 32px;
+    }
+
+    .gp-back-btn {
+        font-size: 0.88rem;
+    }
+
+    /* On desktop the iframe uses 16:9 inside a max-width container */
+    .gp-iframe-zone {
+        height: auto;
+        background: transparent;
+        padding: 24px 0;
+    }
+
+    .gp-iframe-zone::after {
+        content: '';
+        display: block;
+        padding-top: 56.25%;
+        /* 16:9 */
+    }
+
+    .gp-iframe-zone {
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .gp-iframe-zone::after {
+        content: '';
+        display: block;
+        padding-top: 56.25%;
+    }
+
+    .gp-more-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 0 80px;
+    }
+
+    .gp-grid,
+    .games-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 24px;
+    }
 }

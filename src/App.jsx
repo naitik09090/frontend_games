@@ -13,14 +13,11 @@ const Form = lazy(() => import('./components/Form.jsx'))
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout.jsx'))
 const DashboardHome = lazy(() => import('./components/admin/DashboardHome.jsx'))
 const ManageGames = lazy(() => import('./components/admin/ManageGames.jsx'))
-import GameLoader from './components/games/GameLoader.jsx'
 
-// Premium loading fallback for all lazy-loaded routes
-const PageLoader = () => (
-  <div style={{ height: '100vh', background: '#0f0c29', position: 'relative' }}>
-    <GameLoader />
-  </div>
-)
+import GameLoader from './components/games/GameLoader'
+
+// Minimal loading fallback while lazy chunks download
+const PageLoader = () => <GameLoader type="viewport" />;
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {

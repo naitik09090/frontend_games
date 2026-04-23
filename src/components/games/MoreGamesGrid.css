@@ -1,11 +1,5 @@
-/* MoreGamesGrid.css - Styles for the grid and cards, lazy loaded as part of MoreGamesGrid.jsx */
-
-.games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 30px;
-    padding: 0 0 50px;
-}
+/* MoreGamesGrid.css - Card styles only.
+   Grid layout (columns / gap) is controlled by GamePlayer.css → .gp-grid / .games-grid */
 
 .game-card {
     background: rgba(20, 18, 48, 0.85);
@@ -80,18 +74,27 @@
 /* --- Mobile Adjustments --- */
 @media (max-width: 768px) {
     .games-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 
-    .game-card:hover { transform: none; }
+    .game-card:hover {
+        transform: none;
+    }
+
     .game-overlay {
         opacity: 1;
         background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
         padding: 15px;
     }
-    .game-info { transform: none; }
-    .game-card .game-card-title { font-size: 1rem; }
+
+    .game-info {
+        transform: none;
+    }
+
+    .game-card .game-card-title {
+        font-size: 1rem;
+    }
 }
 
 @media (min-width: 577px) and (max-width: 1024px) {
@@ -99,14 +102,24 @@
         grid-template-columns: repeat(3, 1fr);
         gap: 18px;
     }
-    .game-card:hover { transform: none; }
+
+    .game-card:hover {
+        transform: none;
+    }
+
     .game-overlay {
         opacity: 1;
         background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, transparent 100%);
         padding: 14px;
     }
-    .game-info { transform: none; }
-    .game-card .game-card-title { font-size: 0.9rem; }
+
+    .game-info {
+        transform: none;
+    }
+
+    .game-card .game-card-title {
+        font-size: 0.9rem;
+    }
 }
 
 /* --- Staggered Reveal Animation --- */
@@ -115,6 +128,7 @@
         opacity: 0;
         transform: translateY(14px) scale(0.97);
     }
+
     to {
         opacity: 1;
         transform: translateY(0) scale(1);

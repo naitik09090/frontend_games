@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import GameLoader from '../games/GameLoader';
 
 // Removed static JSON import (3MB!) to fix bundle size Lighthouse errors
 const DashboardHome = () => {
@@ -32,9 +33,10 @@ const DashboardHome = () => {
         fetchStats();
     }, [token]);
 
+
     return (
         <div>
-            <h1>Admin Dashboard</h1>
+            <h1 className='text-black'>Admin Dashboard</h1>
             <p className="text-muted">Welcome to the game management system.</p>
 
             <div className="row mt-4">
@@ -42,12 +44,10 @@ const DashboardHome = () => {
                     <div className="card text-white bg-primary mb-3 shadow-sm">
                         <div className="card-body text-center py-4">
                             {loading ? (
-                                <>
-                                    <div className="spinner-border text-light mb-3" role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p className="card-text">Loading game count...</p>
-                                </>
+                                <div className="py-2">
+                                    <GameLoader type="minimal" />
+                                    <p className="card-text mt-3 small opacity-75">SYNCING DATA...</p>
+                                </div>
                             ) : (
                                 <>
                                     <h5 className="card-title display-4">{stats.totalGames.toLocaleString()}</h5>
