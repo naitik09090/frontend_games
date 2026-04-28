@@ -5,6 +5,12 @@
     --loader-blue: #3a7bd5;
     --loader-glow: rgba(0, 210, 255, 0.6);
     --loader-bg: #0f0c29;
+
+    /* Admin Theme Variables */
+    --admin-primary: #ffffff;
+    --admin-secondary: #a855f7;
+    --admin-glow: rgba(99, 102, 241, 0.5);
+    --admin-bg: #202529;
 }
 
 .game-loader-container {
@@ -35,6 +41,11 @@
     height: 100vh;
     background: var(--loader-bg);
     z-index: 9999;
+}
+
+.loader-theme-admin.loader-type-viewport,
+.loader-theme-admin.loader-type-full {
+    background: var(--admin-bg);
 }
 
 .loader-type-inline {
@@ -113,12 +124,34 @@
     animation: spin 2s linear infinite;
 }
 
+.loader-theme-admin .radar-ring-outer {
+    border-color: var(--admin-primary);
+}
+
+.loader-theme-admin .radar-ring-middle {
+    border-top-color: var(--admin-secondary);
+    border-bottom-color: var(--admin-secondary);
+}
+
+.loader-theme-admin .radar-ring-inner {
+    border-color: var(--admin-primary);
+}
+
+.loader-theme-admin .loader-sweep-v2 {
+    background: conic-gradient(from 0deg, transparent 60%, var(--admin-primary) 100%);
+}
+
 .loader-icon-v2 {
     font-size: 3.5rem;
     color: var(--loader-cyan);
     filter: drop-shadow(0 0 15px var(--loader-glow));
     z-index: 10;
     animation: iconFloat 3s ease-in-out infinite;
+}
+
+.loader-theme-admin .loader-icon-v2 {
+    color: var(--admin-primary);
+    filter: drop-shadow(0 0 15px var(--admin-glow));
 }
 
 .loader-type-inline .loader-icon-v2 {
@@ -169,6 +202,14 @@
     animation: glitchCopy 2s reverse infinite;
 }
 
+.loader-theme-admin .loader-text-v2::before {
+    color: var(--admin-primary);
+}
+
+.loader-theme-admin .loader-text-v2::after {
+    color: var(--admin-secondary);
+}
+
 .loader-status-v2 {
     color: var(--loader-blue);
     font-size: 0.65rem;
@@ -178,6 +219,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.loader-theme-admin .loader-status-v2 {
+    color: var(--admin-secondary);
 }
 
 .status-dots::after {

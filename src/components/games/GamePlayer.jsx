@@ -10,7 +10,18 @@ import GameLoader from './GameLoader.jsx';
 let _gamesCache = null;      // cached array
 let _gamesCacheFetch = null; // in-flight promise (prevents duplicate requests)
 
+// ── URL Obfuscation Helpers ──────────────────────────────────────────────────
+const encodeLink = (url) => {
+    if (!url) return '';
+    try { return btoa(unescape(encodeURIComponent(url))); } catch (e) { return url; }
+};
+const decodeLink = (str) => {
+    if (!str) return '';
+    try { return decodeURIComponent(escape(atob(str))); } catch (e) { return str; }
+};
+
 const GamePlayer = () => {
+
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -26,6 +37,8 @@ const GamePlayer = () => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [bottomReady, setBottomReady] = useState(false);
     const [iframeLoaded, setIframeLoaded] = useState(false);
+    const iframeRef = useRef(null);
+
     const [isTimedOut, setIsTimedOut] = useState(false);
     const REMOTE_URL = 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
@@ -154,6 +167,9 @@ const GamePlayer = () => {
         return () => clearTimeout(timer);
     }, [iframeLoaded, loading, game, id]);
 
+
+
+
     const handleCardClick = (clickedGame) => {
         setLoading(true); // Ensure loader shows immediately during transition
         setGame(clickedGame);
@@ -207,7 +223,27 @@ const GamePlayer = () => {
     };
 
     const iframeSrc = getIframeSrc();
+
+    // Secure Loader: Trigger iframe navigation via JS to hide 'src' from DOM Inspector
+    useEffect(() => {
+        if (iframeSrc && iframeRef.current) {
+            const frame = iframeRef.current;
+            const timer = setTimeout(() => {
+                if (frame && frame.contentWindow) {
+                    try {
+                        frame.contentWindow.location.replace(iframeSrc);
+                    } catch (e) {
+                        // Fallback to direct src if replace fails (though it shouldn't for about:blank)
+                        frame.src = iframeSrc;
+                    }
+                }
+            }, 150);
+            return () => clearTimeout(timer);
+        }
+    }, [iframeSrc, id]);
+
     const showLoader = (loading && !game) || !iframeLoaded;
+
 
     // Fullscreen: toggled via CSS class — iframe stays mounted so game doesn't restart
 
@@ -223,7 +259,11 @@ const GamePlayer = () => {
             </div>
 
             {/* ── iframe zone ── */}
-            <div className="gp-iframe-zone">
+            <div
+                className="gp-iframe-zone"
+                onContextMenu={(e) => e.preventDefault()}
+            >
+
                 {/* Loader overlay */}
                 <div className={`gp-loader-overlay ${(showLoader || isTimedOut) ? '' : 'gp-loader-overlay--hidden'}`}>
                     {!isTimedOut ? (
@@ -239,11 +279,7 @@ const GamePlayer = () => {
                                 <button className="btn btn-sm btn-outline-info" onClick={() => window.location.reload()}>
                                     RETRY
                                 </button>
-                                {iframeSrc && (
-                                    <a href={iframeSrc} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-info">
-                                        OPEN IN NEW TAB
-                                    </a>
-                                )}
+                                {/* OPEN IN NEW TAB removed for security - it exposes the direct link */}
                             </div>
                         </div>
                     )}
@@ -253,15 +289,17 @@ const GamePlayer = () => {
                 {iframeSrc ? (
                     <>
                         <iframe
+                            ref={iframeRef}
                             key={game?._id || id}
-                            src={iframeSrc}
                             title={game?.gameName || 'Game Player'}
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                             allowFullScreen
                             scrolling="no"
                             className={`gp-iframe ${iframeLoaded ? 'gp-iframe--visible' : ''}`}
                             onLoad={() => setIframeLoaded(true)}
+                            src="about:blank"
                         />
+
                         {/* Fullscreen toggle button (mobile) */}
                         <button
                             className="gp-fs-btn d-md-none"

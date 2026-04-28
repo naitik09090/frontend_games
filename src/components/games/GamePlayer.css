@@ -80,6 +80,8 @@
     height: calc(100dvh - 48px);
     width: 100%;
     overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Loader overlay sits on top of the iframe */
