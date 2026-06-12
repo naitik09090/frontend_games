@@ -40,7 +40,9 @@ const GamePlayer = () => {
     const iframeRef = useRef(null);
 
     const [isTimedOut, setIsTimedOut] = useState(false);
-    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
+    const REMOTE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000'
+        : 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
 
     // Track whether component is still mounted to avoid state-after-unmount warnings
@@ -113,7 +115,9 @@ const GamePlayer = () => {
 
     // Listen for admin updates or perform a one-time background refresh on mount
     useEffect(() => {
-        const API_URL = 'https://backend-games-phi.vercel.app';
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://backend-games-phi.vercel.app';
         const syncChannel = new (window.BroadcastChannel || class { postMessage() { }; onmessage() { }; close() { } })('gaming_sync');
 
         const refreshGamesData = async (isBackground = false) => {

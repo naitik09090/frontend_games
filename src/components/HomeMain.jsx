@@ -38,8 +38,9 @@ const HomeMain = () => {
 
 
     // Automatically switch between local and remote backend
-
-    const REMOTE_URL = 'https://backend-games-phi.vercel.app';
+    const REMOTE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000'
+        : 'https://backend-games-phi.vercel.app';
     const API_URL = REMOTE_URL;
 
     // Returns a URL to serve the game's logo, preferring the JSON path if available.

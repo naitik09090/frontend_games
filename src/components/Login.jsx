@@ -4,7 +4,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MAX_ATTEMPTS = 3;
 const LS_LOCK_KEY  = 'adminLockUntil';
-const API_URL      = 'https://backend-games-phi.vercel.app';
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : 'https://backend-games-phi.vercel.app';
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const styles = `

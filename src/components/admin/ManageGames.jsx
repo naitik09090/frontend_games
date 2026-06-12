@@ -32,8 +32,9 @@ const ManageGames = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Automatically switch between local and remote backend
-
-    const API_URL = 'https://backend-games-phi.vercel.app';
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000'
+        : 'https://backend-games-phi.vercel.app';
     const REMOTE_URL = API_URL;
 
     useEffect(() => {
@@ -171,7 +172,12 @@ const ManageGames = () => {
             setGames(prev => prev.filter(g => g._id !== id));
             alert('Game deleted successfully');
         } catch (err) {
-            alert(err.message);
+            console.error('Delete error:', err);
+            if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+                alert('Connection Error: Could not reach the backend server. Please check your internet connection or backend status.');
+            } else {
+                alert(err.message);
+            }
         }
     };
 
@@ -193,6 +199,16 @@ const ManageGames = () => {
     };
 
     const handleToggleStatus = async (id) => {
+        let originalStatus;
+        // Optimistically update status in UI for instantaneous toggle
+        setGames(prev => prev.map(g => {
+            if (g._id === id) {
+                originalStatus = g.status;
+                return { ...g, status: g.status === false ? true : false };
+            }
+            return g;
+        }));
+
         try {
             const response = await fetch(`${API_URL}/games/${id}/toggle-status`, {
                 method: 'PATCH',
@@ -200,9 +216,18 @@ const ManageGames = () => {
             });
             if (!response.ok) throw new Error('Failed to toggle status');
             const data = await response.json();
+            // Confirm/update using the returned state
             setGames(prev => prev.map(g => g._id === id ? { ...g, status: data.status } : g));
         } catch (err) {
-            alert(err.message);
+            console.error('Toggle status error:', err);
+            // Revert state on failure
+            setGames(prev => prev.map(g => g._id === id ? { ...g, status: originalStatus } : g));
+
+            if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+                alert('Connection Error: Could not reach the backend server. Please check your internet connection or backend status.');
+            } else {
+                alert(`Error: ${err.message}`);
+            }
         }
     };
 
